@@ -2,6 +2,31 @@ module Rux
   class Parser
     class UnexpectedTokenError < StandardError; end
 
+    class << self
+      def parse_file(path)
+        lexer = ::Rux::Lexer.new(ruby_version)
+        buffer = ::Parser::Source::Buffer.new(path).read
+        lexer.source_buffer = buffer
+        new(lexer).parse
+      end
+
+      def parse(str)
+        lexer = ::Rux::Lexer.new(ruby_version)
+        buffer = ::Parser::Source::Buffer.new('(source)', source: str)
+        lexer.source_buffer = buffer
+        new(lexer).parse
+      end
+
+      private
+
+      def ruby_version
+        @ruby_version ||= RUBY_VERSION
+          .split('.')[0..-2]
+          .join('')
+          .to_i
+      end
+    end
+
     def initialize(lexer)
       @lexer = lexer
       @stack = []
@@ -96,7 +121,7 @@ module Rux
       if is?(:tRUX_ATTRIBUTE_VALUE_RUBY_CODE_START)
         attr_ruby_code
       else
-        AST::TextNode.new(text_of(current)).tap do
+        AST::StringNode.new(text_of(current)).tap do
           consume(:tRUX_ATTRIBUTE_VALUE)
         end
       end

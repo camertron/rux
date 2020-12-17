@@ -9,23 +9,36 @@ module Rux
         @children = []
       end
 
-      def to_ruby
-        "".tap do |result|
+      def to_ruby(indent = 0)
+        ''.tap do |result|
+          at = attrs.map { |k, v| "#{k}: #{v.to_ruby}" }.join(', ')
+
           if name.start_with?(/[A-Z]/)
-            result << "#{name}.new("
+            result << "#{name}.new"
+
+            unless attrs.empty?
+              result << "({ #{at} })"
+            end
           else
-            result << "::Rux.tag('#{name}', "
+            result << "Rux.tag('#{name}'"
+
+            unless attrs.empty?
+              result << ", { #{at} })"
+            end
           end
 
-          if attrs.empty?
-            result << "{}"
-          else
-            at = attrs.map { |k, v| "#{k}: #{v.to_ruby}" }.join(', ')
-            result << "{ #{at} }"
+          rendered_children = children.map do |child|
+            child.to_ruby(indent + 1)
           end
 
-          result << ") { #{children.map(&:to_ruby).join(" + ")} }.render"
+          result << " do\n#{'  ' * (indent + 1)}"
+          result << rendered_children.join(" << ")
+          result << "\n#{'  ' * indent}end.render"
         end
+      end
+
+      def type
+        :tag
       end
     end
   end

@@ -7,8 +7,12 @@ module Rux
         @code = code
       end
 
-      def to_ruby
+      def to_ruby(*)
         code
+      end
+
+      def type
+        :ruby
       end
     end
   end

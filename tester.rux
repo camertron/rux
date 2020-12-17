@@ -8,6 +8,7 @@ class TestComponent < ViewComponent::Base
     <MyAwesomeForm className="form" title={@title}>
       <div className="form-section">
         <Button>Submit {@thing}</Button>
+        <Button>Cancel</Button>
       </div>
     </MyAwesomeForm>
   end

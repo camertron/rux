@@ -7,8 +7,12 @@ module Rux
         @text = text
       end
 
-      def to_ruby
+      def to_ruby(*)
         "\"#{text}\""
+      end
+
+      def type
+        :text
       end
     end
   end

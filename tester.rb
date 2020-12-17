@@ -2,14 +2,16 @@ require 'rux'
 require 'parser/current'
 require 'pry-byebug'
 
-source = File.read('tester.rux')
+puts Rux::Template.new('tester.rux').to_ruby
 
-lexer = ::Rux::Lexer.new(27)
-buffer = ::Parser::Source::Buffer.new('(source)', source: source)
-lexer.source_buffer = buffer
-parser = ::Rux::Parser.new(lexer)
-result = parser.parse
-puts result.map(&:to_ruby).join("\n")
+# source = File.read('tester.rux')
+
+# lexer = ::Rux::Lexer.new(27)
+# buffer = ::Parser::Source::Buffer.new('(source)', source: source)
+# lexer.source_buffer = buffer
+# parser = ::Rux::Parser.new(lexer)
+# result = parser.parse
+# puts result.map(&:to_ruby).join("\n")
 
 # parser = ::Parser::CurrentRuby.new
 # lexer.diagnostics = parser.diagnostics
