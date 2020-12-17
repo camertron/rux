@@ -5,7 +5,7 @@ module Rux
 
       def self.parse(str, input)
         to_state, advance_count = str.match(/\A(\w+)\[?(-?\d+)?\]?/).captures
-        new(input, to_state.to_sym, (advance_count || 1).to_i)
+        new(input, :"tRUX_#{to_state.upcase}", (advance_count || 1).to_i)
       end
 
       def initialize(input, to_state, advance_count)

@@ -110,11 +110,11 @@ module Rux
         yield [state, [text, make_range(start, stop)]]
 
         case state
-          when :tag_open, :tag_self_closing
+          when :tRUX_TAG_OPEN, :tRUX_TAG_SELF_CLOSING
             tag_stack.push(text)
-          when :tag_close
+          when :tRUX_TAG_CLOSE
             tag_stack.pop
-          when :tag_close_end
+          when :tRUX_TAG_CLOSE_END
             if tag_stack.empty?
               @ts = @te = @p = stop
               break
@@ -130,7 +130,7 @@ module Rux
     def each_rux_token
       return to_enum(__method__) unless block_given?
 
-      cur_state = :start
+      cur_state = :tRUX_START
       last_idx = @p
 
       loop do
@@ -139,7 +139,7 @@ module Rux
         cur_state = cur_trans.to_state
         @p += cur_trans.advance_count
 
-        if cur_state == :attribute_value_ruby_code || cur_state == :literal_ruby_code
+        if ruby_code?(cur_state)
           @te = @ts = @p
           curlies = 1
 
@@ -166,12 +166,17 @@ module Rux
           next_chr = @source_pts[@p].chr
 
           unless self.class.state_table[cur_state][next_chr]
-            cur_state = :start
+            cur_state = :tRUX_START
           end
 
           last_idx = @p
         end
       end
+    end
+
+    def ruby_code?(state)
+      state == :tRUX_ATTRIBUTE_VALUE_RUBY_CODE ||
+        state == :tRUX_LITERAL_RUBY_CODE
     end
 
     def is?(tok, sym)

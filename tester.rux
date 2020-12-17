@@ -1,4 +1,4 @@
-class TestComponent # < ViewComponent::Base
+class TestComponent < ViewComponent::Base
   def initialize(title:, :thing)
     @title = title
     @thing = thing

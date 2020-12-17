@@ -15,7 +15,7 @@ module Rux
       [].tap do |result|
         while token_type = type_of(current)
           case token_type
-            when :tag_open_start
+            when :tRUX_TAG_OPEN_START
               if ruby_stop && ruby_start < ruby_stop
                 ruby_code = @lexer.source_buffer.source[ruby_start...ruby_stop]
                 result << AST::RubyNode.new(ruby_code)
@@ -39,23 +39,23 @@ module Rux
     private
 
     def tag
-      consume(:tag_open_start)
+      consume(:tRUX_TAG_OPEN_START)
       tag_name = text_of(current)
-      consume(:tag_open, :tag_self_closing)
+      consume(:tRUX_TAG_OPEN, :tRUX_TAG_SELF_CLOSING)
       attrs = attributes
-      maybe_consume(:attribute_spaces)
-      consume(:tag_open_end)
+      maybe_consume(:tRUX_ATTRIBUTE_SPACES)
+      consume(:tRUX_TAG_OPEN_END)
       tag_node = AST::TagNode.new(tag_name, attrs)
 
-      if is?(:tag_self_closing_end)
-        consume(:tag_self_closing_end)
+      if is?(:tRUX_TAG_SELF_CLOSING_END)
+        consume(:tRUX_TAG_SELF_CLOSING_END)
         return tag_node
       end
 
       @stack.push(tag_name)
 
-      until is?(:tag_close_start)
-        if is?(:literal, :literal_ruby_code_start)
+      until is?(:tRUX_TAG_CLOSE_START)
+        if is?(:tRUX_LITERAL, :tRUX_LITERAL_RUBY_CODE_START)
           lit = literal
           tag_node.children << lit if lit
         else
@@ -63,18 +63,18 @@ module Rux
         end
       end
 
-      consume(:tag_close_start)
+      consume(:tRUX_TAG_CLOSE_START)
       # @TODO: check open/close tags match
       @stack.pop
-      consume(:tag_close)
-      consume(:tag_close_end)
+      consume(:tRUX_TAG_CLOSE)
+      consume(:tRUX_TAG_CLOSE_END)
 
       tag_node
     end
 
     def attributes
       {}.tap do |attrs|
-        while is?(:attribute_spaces, :attribute_name)
+        while is?(:tRUX_ATTRIBUTE_SPACES, :tRUX_ATTRIBUTE_NAME)
           key, value = attribute
           attrs[key] = value
         end
@@ -82,51 +82,51 @@ module Rux
     end
 
     def attribute
-      maybe_consume(:attribute_spaces)
+      maybe_consume(:tRUX_ATTRIBUTE_SPACES)
       attr_name = text_of(current)
-      consume(:attribute_name)
-      maybe_consume(:attribute_equals_spaces)
-      consume(:attribute_equals)
-      maybe_consume(:attribute_value_spaces)
+      consume(:tRUX_ATTRIBUTE_NAME)
+      maybe_consume(:tRUX_ATTRIBUTE_EQUALS_SPACES)
+      consume(:tRUX_ATTRIBUTE_EQUALS)
+      maybe_consume(:tRUX_ATTRIBUTE_VALUE_SPACES)
       attr_value = attribute_value
       [attr_name, attr_value]
     end
 
     def attribute_value
-      if is?(:attribute_value_ruby_code_start)
+      if is?(:tRUX_ATTRIBUTE_VALUE_RUBY_CODE_START)
         attr_ruby_code
       else
         AST::TextNode.new(text_of(current)).tap do
-          consume(:attribute_value)
+          consume(:tRUX_ATTRIBUTE_VALUE)
         end
       end
     end
 
     def attr_ruby_code
-      consume(:attribute_value_ruby_code_start)
+      consume(:tRUX_ATTRIBUTE_VALUE_RUBY_CODE_START)
 
       AST::RubyNode.new(text_of(current)).tap do
-        consume(:attribute_value_ruby_code)
-        consume(:attribute_value_ruby_code_end)
+        consume(:tRUX_ATTRIBUTE_VALUE_RUBY_CODE)
+        consume(:tRUX_ATTRIBUTE_VALUE_RUBY_CODE_END)
       end
     end
 
     def literal
-      if is?(:literal_ruby_code_start)
+      if is?(:tRUX_LITERAL_RUBY_CODE_START)
         literal_ruby_code
       else
         lit = text_of(current)
-        consume(:literal)
+        consume(:tRUX_LITERAL)
         AST::TextNode.new(lit.squeeze(' ')) unless lit.strip.empty?
       end
     end
 
     def literal_ruby_code
-      consume(:literal_ruby_code_start)
+      consume(:tRUX_LITERAL_RUBY_CODE_START)
 
       AST::RubyNode.new(text_of(current)).tap do
-        consume(:literal_ruby_code)
-        consume(:literal_ruby_code_end)
+        consume(:tRUX_LITERAL_RUBY_CODE)
+        consume(:tRUX_LITERAL_RUBY_CODE_END)
       end
     end
 

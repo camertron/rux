@@ -3,7 +3,7 @@ module Rux
     class State
       def self.parse(state_str, transition_strs, inputs)
         is_terminal = state_str.end_with?('*')
-        state_name = state_str.chomp('*').to_sym
+        state_name = "tRUX_#{state_str.chomp('*').upcase}".to_sym
 
         transitions = transition_strs.each_with_object([]).with_index do |(ts, ret), idx|
           ret << Transition.parse(ts, inputs[idx]) if ts
