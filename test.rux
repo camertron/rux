@@ -6,7 +6,7 @@ class TestComponent < ViewComponent::Base
 
   def render
     <MyAwesomeForm className="form">
-      <div className="form-section" title={@title}>
+      <div class="form-section" data-track="foo" title={@title}>
         {5.times.map do
           <Button>Submit {@thing}</Button>
         end}

@@ -1,4 +1,4 @@
-,[<],[a-zA-Z0-9],[>],[/],(space),[=],"[""]",['],"[^""]",[^'],[{],[}],(default)
+,[<],[a-zA-Z0-9_-_---],[>],[/],(space),[=],"[""]",['],"[^""]",[^'],[{],[}],(default)
 start,tag_open_test,,,,,,,,,,literal_ruby_code_start,,literal_body
 tag_open_test,,tag_open_start[0],,tag_close_start,,,,,,,,,
 tag_open_start*,,tag_open_body,,,,,,,,,,,

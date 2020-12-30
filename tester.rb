@@ -4,7 +4,7 @@ require 'unparser'
 require 'pry-byebug'
 
 
-ast = Rux::Parser.parse_file('test4.rux')
+ast = Rux::Parser.parse_file('test.rux')
 puts Unparser.unparse(Parser::CurrentRuby.parse(ast.to_ruby))
 
 

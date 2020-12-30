@@ -1,7 +1,3 @@
-require 'rux/core_ext/kernel'
-require 'rux/ext/zeitwerk/loader'
-require 'rux/railtie'
-
 module Rux
   autoload :AST,       'rux/ast'
   autoload :Lex,       'rux/lex'
