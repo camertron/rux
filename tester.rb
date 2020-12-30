@@ -1,17 +1,22 @@
 require 'rux'
 require 'parser/current'
+require 'unparser'
 require 'pry-byebug'
 
 
-str = File.read('test.rux')
-buffer = ::Parser::Source::Buffer.new('(source)', source: str)
-lexer = ::Rux::Lexer.new(buffer)
+ast = Rux::Parser.parse_file('test4.rux')
+puts Unparser.unparse(Parser::CurrentRuby.parse(ast.to_ruby))
 
-while true
-  token, (text, _) = lexer.advance
-  puts "#{token}: #{text.inspect}"
-  break unless token
-end
+
+# str = File.read('test4.rux')
+# buffer = ::Parser::Source::Buffer.new('(source)', source: str)
+# lexer = ::Rux::Lexer.new(buffer)
+
+# while true
+#   token, (text, _) = lexer.advance
+#   puts "#{token}: #{text.inspect}"
+#   break unless token
+# end
 
 
 

@@ -12,10 +12,11 @@ module Rux
   autoload :Template,  'rux/template'
 
   class << self
-    def tag(tag_name, attributes)
-      "<#{tag_name} #{serialize_attrs(attributes)}>" <<
-        (block_given? ? yield || '' : '') <<
+    def tag(tag_name, attributes = {})
+      ("<#{tag_name} #{serialize_attrs(attributes)}>" <<
+        (block_given? ? Array(yield) : []).join <<
         "</#{tag_name}>"
+      ).html_safe
     end
 
     def serialize_attrs(attributes)

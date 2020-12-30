@@ -1,5 +1,7 @@
 module Rux
   class Lexer
+    attr_reader :source_buffer
+
     def initialize(source_buffer)
       @source_buffer = source_buffer
       @stack = [RubyLexer.new(source_buffer, 0)]

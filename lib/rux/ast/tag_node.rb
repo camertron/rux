@@ -9,7 +9,7 @@ module Rux
         @children = []
       end
 
-      def to_ruby(indent = 0)
+      def to_ruby
         ''.tap do |result|
           at = attrs.map { |k, v| "#{k}: #{v.to_ruby}" }.join(', ')
 
@@ -19,27 +19,24 @@ module Rux
             unless attrs.empty?
               result << "({ #{at} })"
             end
-
-            result << ')'
           else
             result << "Rux.tag('#{name}'"
 
             unless attrs.empty?
-              result << ", { #{at} })"
+              result << ", { #{at} }"
             end
           end
+
+          result << ')'
 
           unless children.empty?
-            rendered_children = children.map do |child|
-              child.to_ruby(indent + 1)
-            end
-
-            result << " do\n#{'  ' * (indent + 1)}"
+            rendered_children = children.map(&:to_ruby)
+            result << " do\n"
             result << rendered_children.join(" << ")
-            result << "\n#{'  ' * indent}end"
+            result << "\nend"
           end
 
-          result << '.html_safe'
+          # result << '.html_safe'
         end
       end
 

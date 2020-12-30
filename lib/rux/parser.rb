@@ -4,64 +4,109 @@ module Rux
 
     class << self
       def parse_file(path)
-        lexer = ::Rux::Lexer.new(ruby_version)
         buffer = ::Parser::Source::Buffer.new(path).read
-        lexer.source_buffer = buffer
+        lexer = ::Rux::Lexer.new(buffer)
         new(lexer).parse
       end
 
       def parse(str)
-        lexer = ::Rux::Lexer.new(ruby_version)
         buffer = ::Parser::Source::Buffer.new('(source)', source: str)
-        lexer.source_buffer = buffer
+        lexer = ::Rux::Lexer.new(buffer)
         new(lexer).parse
-      end
-
-      private
-
-      def ruby_version
-        @ruby_version ||= RUBY_VERSION
-          .split('.')[0..-2]
-          .join('')
-          .to_i
       end
     end
 
     def initialize(lexer)
       @lexer = lexer
       @stack = []
+      @current = get_next
     end
 
     def parse
-      @current = get_next
-      ruby_start = 0
-      ruby_stop = nil
+      curlies = 1
+      children = []
 
-      [].tap do |result|
-        while token_type = type_of(current)
-          case token_type
-            when :tRUX_TAG_OPEN_START
-              if ruby_stop && ruby_start < ruby_stop
-                ruby_code = @lexer.source_buffer.source[ruby_start...ruby_stop]
-                result << AST::RubyNode.new(ruby_code)
-              end
+      loop do
+        type = type_of(current)
+        break unless type
 
-              result << tag
-              ruby_start = ruby_stop = pos_of(current).end_pos
-            else
-              ruby_stop = pos_of(current).end_pos
-              consume(token_type)
-          end
+        case type
+          when :tLCURLY, :tLBRACE, :tRUX_LITERAL_RUBY_CODE_START
+            curlies += 1
+          when :tRCURLY, :tRBRACE, :tRUX_LITERAL_RUBY_CODE_END
+            curlies -= 1
         end
 
-        if ruby_stop && ruby_start < ruby_stop
-          ruby_code = @lexer.source_buffer.source[ruby_start...ruby_stop]
-          result << AST::RubyNode.new(ruby_code)
+        break if curlies == 0
+
+        if rb = ruby
+          children << rb
+        elsif type_of(current) == :tRUX_TAG_OPEN_START
+          children << tag
+        else
+          binding.pry
         end
       end
+
+      AST::ListNode.new(children)
     end
 
+    # def parse
+    #   @current = get_next
+    #   ruby_start = 0
+    #   ruby_stop = nil
+
+    #   [].tap do |result|
+    #     while token_type = type_of(current)
+    #       case token_type
+    #         when :tRUX_TAG_OPEN_START
+    #           if ruby_stop && ruby_start < ruby_stop
+    #             ruby_code = @lexer.source_buffer.source[ruby_start...ruby_stop]
+    #             result << AST::RubyNode.new(ruby_code)
+    #           end
+
+    #           result << tag
+    #           ruby_start = ruby_stop = pos_of(current).end_pos
+    #         else
+    #           ruby_stop = pos_of(current).end_pos
+    #           consume(token_type)
+    #       end
+    #     end
+
+    #     if ruby_stop && ruby_start < ruby_stop
+    #       ruby_code = @lexer.source_buffer.source[ruby_start...ruby_stop]
+    #       result << AST::RubyNode.new(ruby_code)
+    #     end
+    #   end
+    # end
+
     private
+
+    def ruby
+      ruby_start = pos_of(current).begin_pos
+
+      loop do
+        type = type_of(current)
+
+        if type.nil? || RuxLexer.state_table.include?(type_of(current))
+          break
+        end
+
+        consume(type_of(current))
+      end
+
+      unless type_of(current)
+        return AST::RubyNode.new(
+          @lexer.source_buffer.source[ruby_start..-1]
+        )
+      end
+
+      if pos_of(current).begin_pos != ruby_start
+        AST::RubyNode.new(
+          @lexer.source_buffer.source[ruby_start...(pos_of(current).end_pos - 1)]
+        )
+      end
+    end
 
     def tag
       consume(:tRUX_TAG_OPEN_START)
@@ -130,8 +175,7 @@ module Rux
     def attr_ruby_code
       consume(:tRUX_ATTRIBUTE_VALUE_RUBY_CODE_START)
 
-      AST::RubyNode.new(text_of(current)).tap do
-        consume(:tRUX_ATTRIBUTE_VALUE_RUBY_CODE)
+      ruby.tap do
         consume(:tRUX_ATTRIBUTE_VALUE_RUBY_CODE_END)
       end
     end
@@ -149,8 +193,7 @@ module Rux
     def literal_ruby_code
       consume(:tRUX_LITERAL_RUBY_CODE_START)
 
-      AST::RubyNode.new(text_of(current)).tap do
-        consume(:tRUX_LITERAL_RUBY_CODE)
+      parse.tap do |res|
         consume(:tRUX_LITERAL_RUBY_CODE_END)
       end
     end
@@ -191,11 +234,7 @@ module Rux
     end
 
     def get_next
-      if @eof
-        EOF_TOKEN
-      else
-        @lexer.advance
-      end
+      @lexer.advance
     end
   end
 end

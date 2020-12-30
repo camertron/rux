@@ -1,0 +1,5 @@
+class ButtonComponent < ViewComponent::Base
+  def call
+    <div className="button">{content}</div>
+  end
+end

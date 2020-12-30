@@ -80,13 +80,34 @@ module Rux
 
     def populate_queue
       until @rux_token_queue.size >= LOOKAHEAD
-        cur_token = advance_orig
+        begin
+          cur_token = advance_orig
+        rescue NoMethodError
+          # Internal lexer errors can happen since we're asking the ruby lexer
+          # to start in an arbitrary position inside the source buffer. It may
+          # encounter foreign rux tokens it's not expecting, etc. Best to stop
+          # trying to look ahead and call it quits.
+          break
+        end
+
         break unless cur_token[0]
         @rux_token_queue << cur_token
       end
     end
 
     def at_rux?
+      at_newline_lt? || at_not_inheritance?
+    end
+
+    def at_newline_lt?
+      is?(@rux_token_queue[0], :tNL) &&
+        is?(@rux_token_queue[1], :tLT) && (
+          is?(@rux_token_queue[2], :tCONSTANT) ||
+          is?(@rux_token_queue[2], :tIDENTIFIER)
+        )
+    end
+
+    def at_not_inheritance?
       is_not?(@rux_token_queue[0], :tCONSTANT) &&
         is?(@rux_token_queue[1], :tLT) &&
         is?(@rux_token_queue[2], :tCONSTANT)

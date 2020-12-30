@@ -1,0 +1,14 @@
+class OrderFormComponent < ViewComponent::Base
+  def initialize(title:, thing:)
+    @title = title
+    @thing = thing
+  end
+
+  def call
+    <div>
+      {5.times.map do
+        <ButtonComponent>Submit {@thing}</ButtonComponent>
+      end}
+    </div>
+  end
+end

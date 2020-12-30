@@ -11,6 +11,7 @@ Gem::Specification.new do |s|
   s.platform = Gem::Platform::RUBY
 
   s.add_dependency 'parser', '~> 2.7'
+  s.add_dependency 'unparser', '~> 0.5'
 
   # Zeitwerk was introduced in rails 6. I think we should support back to 5.0
   # as well, but for now let's just deal with 6 to limit scope.

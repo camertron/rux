@@ -12,6 +12,7 @@ class TestComponent < ViewComponent::Base
         end}
         <Button>Cancel</Button>
       </div>
+      <Foo>bar</Foo>
     </MyAwesomeForm>
   end
 end
