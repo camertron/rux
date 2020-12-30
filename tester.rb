@@ -2,7 +2,18 @@ require 'rux'
 require 'parser/current'
 require 'pry-byebug'
 
-puts Rux::Template.new('tester.rux').to_ruby
+
+str = File.read('test.rux')
+buffer = ::Parser::Source::Buffer.new('(source)', source: str)
+lexer = ::Rux::Lexer.new(buffer)
+
+while true
+  token, (text, _) = lexer.advance
+  puts "#{token}: #{text.inspect}"
+  break unless token
+end
+
+
 
 # source = File.read('tester.rux')
 

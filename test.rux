@@ -1,0 +1,17 @@
+class TestComponent < ViewComponent::Base
+  def initialize(title:, thing:)
+    @title = title
+    @thing = thing
+  end
+
+  def render
+    <MyAwesomeForm className="form">
+      <div className="form-section" title={@title}>
+        {5.times.map do
+          <Button>Submit {@thing}</Button>
+        end}
+        <Button>Cancel</Button>
+      </div>
+    </MyAwesomeForm>
+  end
+end

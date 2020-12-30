@@ -1,40 +1,30 @@
+require 'rux/core_ext/kernel'
+require 'rux/ext/zeitwerk/loader'
+require 'rux/railtie'
+
 module Rux
-  autoload :AST,      'rux/ast'
-  autoload :Lex,      'rux/lex'
-  autoload :Lexer,    'rux/lexer'
-  autoload :Parser,   'rux/parser'
-  autoload :Template, 'rux/template'
-end
+  autoload :AST,       'rux/ast'
+  autoload :Lex,       'rux/lex'
+  autoload :Lexer,     'rux/lexer'
+  autoload :Parser,    'rux/parser'
+  autoload :RubyLexer, 'rux/ruby_lexer'
+  autoload :RuxLexer,  'rux/rux_lexer'
+  autoload :Template,  'rux/template'
 
-alias :rux_orig_require :require
-
-def require(file)
-  begin
-    rux_orig_require(file)
-  rescue LoadError => e
-    path = nil
-    rux_file = "#{file}.rux"
-
-    $LOAD_PATH.each do |lp|
-      check_path = File.expand_path(File.join(lp, rux_file))
-
-      if File.exist?(check_path)
-        path = check_path
-        break
-      end
+  class << self
+    def tag(tag_name, attributes)
+      "<#{tag_name} #{serialize_attrs(attributes)}>" <<
+        (block_given? ? yield || '' : '') <<
+        "</#{tag_name}>"
     end
 
-    raise unless path
-    return false if $LOADED_FEATURES.include?(path)
-
-    ruxc_file = "#{path.chomp('.rux')}.ruxc"
-    tmpl = Rux::Template.new(path)
-    File.write(ruxc_file, tmpl.to_ruby)
-    rux_orig_require(ruxc_file)
-
-    $LOADED_FEATURES << path
-    return true
+    def serialize_attrs(attributes)
+      ''.tap do |result|
+        attributes.each_pair.with_index do |(k, v), idx|
+          result << ' ' unless idx > 0
+          result << "#{k}=#{v}"
+        end
+      end
+    end
   end
-rescue Exception
-  return rux_orig_require(file)
 end

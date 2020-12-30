@@ -14,11 +14,13 @@ module Rux
           at = attrs.map { |k, v| "#{k}: #{v.to_ruby}" }.join(', ')
 
           if name.start_with?(/[A-Z]/)
-            result << "#{name}.new"
+            result << "render(#{name}.new"
 
             unless attrs.empty?
               result << "({ #{at} })"
             end
+
+            result << ')'
           else
             result << "Rux.tag('#{name}'"
 
@@ -27,13 +29,17 @@ module Rux
             end
           end
 
-          rendered_children = children.map do |child|
-            child.to_ruby(indent + 1)
+          unless children.empty?
+            rendered_children = children.map do |child|
+              child.to_ruby(indent + 1)
+            end
+
+            result << " do\n#{'  ' * (indent + 1)}"
+            result << rendered_children.join(" << ")
+            result << "\n#{'  ' * indent}end"
           end
 
-          result << " do\n#{'  ' * (indent + 1)}"
-          result << rendered_children.join(" << ")
-          result << "\n#{'  ' * indent}end.render"
+          result << '.html_safe'
         end
       end
 

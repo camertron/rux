@@ -1,0 +1,7 @@
+def render
+  <div>
+    {5.times.map do
+      <Button>Submit {@thing}</Button>
+    end}
+  </div>
+end

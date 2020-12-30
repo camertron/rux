@@ -33,7 +33,7 @@ attribute_value_ruby_code_end*,,attribute_name,tag_open_end,tag_self_closing_sta
 attribute_value*,,attribute_name,tag_open_end,tag_self_closing_start,attribute_spaces_body,,attribute_value_ending,attribute_value_ending,,,,,
 ,,,,,,,,,,,,,
 literal_body,literal[0],,,,,,,,,,literal[0],,literal_body
-literal*,,,,,,,,,,,,,
-literal_ruby_code_start*,,,,,,,,,,,,,literal_ruby_code
+literal*,,,,,,,,,,,literal_ruby_code_start,,
+literal_ruby_code_start*,,,,,,,,,,,,,literal_ruby_code[0]
 literal_ruby_code*,,,,,,,,,,,,literal_ruby_code_end,
 literal_ruby_code_end*,,,,,,,,,,,,,
