@@ -61,7 +61,7 @@ module Rux
         end
 
         token = @rux_token_queue.shift
-        type, (_, _) = token
+        type, (_, pos) = token
 
         case type
           when :tLCURLY, :tLBRACE
@@ -70,7 +70,10 @@ module Rux
             curlies -= 1
         end
 
-        break if curlies == 0
+        if curlies == 0
+          yield [:tRESET, ['$eof', pos]]
+          break
+        end
 
         yield token
 

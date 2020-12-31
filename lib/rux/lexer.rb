@@ -36,9 +36,13 @@ module Rux
           next
         end
 
-        yield token
+        if type == :tRESET
+          @p = pos.begin_pos
+        else
+          yield token
 
-        @p = pos.end_pos
+          @p = pos.end_pos
+        end
       end
     end
 

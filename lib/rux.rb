@@ -1,3 +1,5 @@
+require 'cgi'
+
 module Rux
   autoload :AST,       'rux/ast'
   autoload :Lex,       'rux/lex'
@@ -6,6 +8,7 @@ module Rux
   autoload :RubyLexer, 'rux/ruby_lexer'
   autoload :RuxLexer,  'rux/rux_lexer'
   autoload :Template,  'rux/template'
+  autoload :Utils,     'rux/utils'
 
   class << self
     def tag(tag_name, attributes = {})
@@ -18,8 +21,8 @@ module Rux
     def serialize_attrs(attributes)
       ''.tap do |result|
         attributes.each_pair.with_index do |(k, v), idx|
-          result << ' ' unless idx > 0
-          result << "#{k}=#{v}"
+          result << ' ' unless idx == 0
+          result << "#{k}=\"#{CGI.escape_html(v)}\""
         end
       end
     end

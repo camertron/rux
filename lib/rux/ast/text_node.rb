@@ -8,7 +8,7 @@ module Rux
       end
 
       def to_ruby
-        "\"#{text}\""
+        "\"#{text}\".html_safe"
       end
 
       def type
