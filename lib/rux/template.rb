@@ -16,8 +16,11 @@ module Rux
     end
 
     def write(outfile = nil)
-      outfile ||= "#{path.chomp('.rux')}.ruxc"
-      File.write(outfile, to_ruby)
+      File.write(outfile || default_outfile, to_ruby)
+    end
+
+    def default_outfile
+      @outfile ||= "#{path.chomp('.rux')}.ruxc"
     end
 
     private

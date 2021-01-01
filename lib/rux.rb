@@ -11,6 +11,12 @@ module Rux
   autoload :Utils,     'rux/utils'
 
   class << self
+    attr_accessor :compile_on_load
+
+    def compile_on_load?
+      compile_on_load.call
+    end
+
     def tag(tag_name, attributes = {})
       ("<#{tag_name} #{serialize_attrs(attributes)}>" <<
         (block_given? ? Array(yield) : []).join <<
@@ -31,4 +37,6 @@ module Rux
       @library_paths ||= []
     end
   end
+
+  self.compile_on_load = -> () { true }
 end

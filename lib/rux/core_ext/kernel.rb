@@ -6,9 +6,8 @@ module Kernel
 
   def load(file, *args)
     if File.extname(file) == '.rux'
-      ruxc_file = "#{file.chomp('.rux')}.ruxc"
       tmpl = Rux::Template.new(file)
-      File.write(ruxc_file, tmpl.to_ruby)
+      tmpl.write if Rux.compile_on_load?
 
       # I don't understand why, but it's necessary to delete the constant
       # in order to load the .ruxc file. Otherwise you get an error about
@@ -18,14 +17,13 @@ module Kernel
       parent, cname = loader.autoloads[file]
       parent.send(:remove_const, cname)
 
-      return rux_orig_load(ruxc_file, *args)
+      return rux_orig_load(tmpl.default_outfile, *args)
     end
 
     rux_orig_load(file, *args)
   end
 
   def require(file)
-    # puts "REQUIRE #{file}"
     loader = Zeitwerk::Registry.loader_for(file)
 
     begin
