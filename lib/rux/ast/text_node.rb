@@ -1,3 +1,5 @@
+require 'cgi'
+
 module Rux
   module AST
     class TextNode
@@ -8,7 +10,7 @@ module Rux
       end
 
       def to_ruby
-        "\"#{text}\".html_safe"
+        "\"#{CGI.escape_html(text)}\".html_safe"
       end
 
       def type

@@ -22,9 +22,13 @@ module Rux
       ''.tap do |result|
         attributes.each_pair.with_index do |(k, v), idx|
           result << ' ' unless idx == 0
-          result << "#{k}=\"#{CGI.escape_html(v)}\""
+          result << "#{k.to_s.gsub('-', '_')}=\"#{CGI.escape_html(v)}\""
         end
       end
+    end
+
+    def library_paths
+      @library_paths ||= []
     end
   end
 end

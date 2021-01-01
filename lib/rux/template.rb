@@ -15,6 +15,11 @@ module Rux
       )
     end
 
+    def write(outfile = nil)
+      outfile ||= "#{path.chomp('.rux')}.ruxc"
+      File.write(outfile, to_ruby)
+    end
+
     private
 
     def root

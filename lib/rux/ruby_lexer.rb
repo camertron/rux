@@ -99,19 +99,18 @@ module Rux
     end
 
     def at_rux?
-      at_newline_lt? || at_not_inheritance?
+      at_lt? && !at_inheritance?
     end
 
-    def at_newline_lt?
-      is?(@rux_token_queue[0], :tNL) &&
-        is?(@rux_token_queue[1], :tLT) && (
-          is?(@rux_token_queue[2], :tCONSTANT) ||
-          is?(@rux_token_queue[2], :tIDENTIFIER)
-        )
+    def at_lt?
+      is?(@rux_token_queue[1], :tLT) && (
+        is?(@rux_token_queue[2], :tCONSTANT) ||
+        is?(@rux_token_queue[2], :tIDENTIFIER)
+      )
     end
 
-    def at_not_inheritance?
-      is_not?(@rux_token_queue[0], :tCONSTANT) &&
+    def at_inheritance?
+      is?(@rux_token_queue[0], :tCONSTANT) &&
         is?(@rux_token_queue[1], :tLT) &&
         is?(@rux_token_queue[2], :tCONSTANT)
     end
