@@ -51,35 +51,6 @@ module Rux
       AST::ListNode.new(children)
     end
 
-    # def parse
-    #   @current = get_next
-    #   ruby_start = 0
-    #   ruby_stop = nil
-
-    #   [].tap do |result|
-    #     while token_type = type_of(current)
-    #       case token_type
-    #         when :tRUX_TAG_OPEN_START
-    #           if ruby_stop && ruby_start < ruby_stop
-    #             ruby_code = @lexer.source_buffer.source[ruby_start...ruby_stop]
-    #             result << AST::RubyNode.new(ruby_code)
-    #           end
-
-    #           result << tag
-    #           ruby_start = ruby_stop = pos_of(current).end_pos
-    #         else
-    #           ruby_stop = pos_of(current).end_pos
-    #           consume(token_type)
-    #       end
-    #     end
-
-    #     if ruby_stop && ruby_start < ruby_stop
-    #       ruby_code = @lexer.source_buffer.source[ruby_start...ruby_stop]
-    #       result << AST::RubyNode.new(ruby_code)
-    #     end
-    #   end
-    # end
-
     private
 
     def ruby
@@ -156,9 +127,15 @@ module Rux
       attr_name = text_of(current)
       consume(:tRUX_ATTRIBUTE_NAME)
       maybe_consume(:tRUX_ATTRIBUTE_EQUALS_SPACES)
-      consume(:tRUX_ATTRIBUTE_EQUALS)
-      maybe_consume(:tRUX_ATTRIBUTE_VALUE_SPACES)
-      attr_value = attribute_value
+
+      attr_value = if maybe_consume(:tRUX_ATTRIBUTE_EQUALS)
+        maybe_consume(:tRUX_ATTRIBUTE_VALUE_SPACES)
+        attribute_value
+      else
+        # if no equals sign, assume boolean attribute
+        AST::StringNode.new("\"true\"")
+      end
+
       [attr_name, attr_value]
     end
 
@@ -209,6 +186,9 @@ module Rux
     def maybe_consume(type)
       if type_of(current) == type
         @current = get_next
+        true
+      else
+        false
       end
     end
 
