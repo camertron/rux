@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.authors  = ['Cameron Dutro']
   s.email    = ['camertron@gmail.com']
   s.homepage = 'http://github.com/camertron/rux'
-  s.description = s.summary = 'A React-inspired way to write view components.'
+  s.description = s.summary = 'A jsx-inspired way to write view components.'
   s.platform = Gem::Platform::RUBY
 
   s.add_dependency 'parser', '~> 2.7'
