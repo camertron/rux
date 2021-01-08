@@ -131,9 +131,11 @@ module Rux
 
     def attributes
       {}.tap do |attrs|
-        while is?(:tRUX_ATTRIBUTE_SPACES, :tRUX_ATTRIBUTE_NAME)
+        while is?(:tRUX_ATTRIBUTE_NAME)
           key, value = attribute
           attrs[key] = value
+
+          maybe_consume(:tRUX_ATTRIBUTE_SPACES)
         end
       end
     end
