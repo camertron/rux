@@ -1,6 +1,9 @@
+require 'parser'
+
 module Rux
   class Parser
     class UnexpectedTokenError < StandardError; end
+    class TagMismatchError < StandardError; end
 
     class << self
       def parse_file(path)
@@ -82,10 +85,12 @@ module Rux
     def tag
       consume(:tRUX_TAG_OPEN_START)
       tag_name = text_of(current)
+      tag_pos = pos_of(current)
       consume(:tRUX_TAG_OPEN, :tRUX_TAG_SELF_CLOSING)
+      maybe_consume(:tRUX_ATTRIBUTE_SPACES)
       attrs = attributes
       maybe_consume(:tRUX_ATTRIBUTE_SPACES)
-      consume(:tRUX_TAG_OPEN_END)
+      maybe_consume(:tRUX_TAG_OPEN_END)
       tag_node = AST::TagNode.new(tag_name, attrs)
 
       if is?(:tRUX_TAG_SELF_CLOSING_END)
@@ -105,8 +110,19 @@ module Rux
       end
 
       consume(:tRUX_TAG_CLOSE_START)
-      # @TODO: check open/close tags match
+
+      closing_tag_name = text_of(current)
+
+      if @stack.last != closing_tag_name
+        closing_tag_pos = pos_of(current)
+
+        raise TagMismatchError, "closing tag '#{closing_tag_name}' on line "\
+          "#{closing_tag_pos.line} did not match opening tag '#{tag_name}' "\
+          "on line #{tag_pos.line}"
+      end
+
       @stack.pop
+
       consume(:tRUX_TAG_CLOSE)
       consume(:tRUX_TAG_CLOSE_END)
 

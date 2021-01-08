@@ -44,6 +44,14 @@ module Rux
     end
 
     def each_token(&block)
+      # We detect whether or not we're at the beginning of a rux tag by looking
+      # ahead by 1 token; that's why the first element in @rux_token_queue is
+      # yielded immediately. If the lexer _starts_ at a rux tag however,
+      # lookahead is a lot more difficult. To mitigate, we insert a dummy skip
+      # token here. That way, at_rux? checks the right tokens in the queue and
+      # correctly identifies the start of a rux tag.
+      @rux_token_queue << [:tSKIP, ['$skip', make_range(@p, @p)]]
+
       @eof = false
       curlies = 1
       populate_queue
@@ -55,6 +63,8 @@ module Rux
           @eof = true
           _, (_, pos) = @rux_token_queue[0]
 
+          # @eof is set to false by reset_to above, which is called after
+          # popping the previous lexer off the lexer stack (see lexer.rb)
           while @eof
             yield [nil, ['$eof', pos]]
           end
@@ -70,6 +80,9 @@ module Rux
             curlies -= 1
         end
 
+        # if curlies are balanced, we're done lexing ruby code, so yield a
+        # reset token to tell the system where we stopped, then break to stop
+        # our enumerator (will raise a StopIteration)
         if curlies == 0
           yield [:tRESET, ['$eof', pos]]
           break
@@ -87,7 +100,7 @@ module Rux
           cur_token = advance_orig
         rescue NoMethodError
           # Internal lexer errors can happen since we're asking the ruby lexer
-          # to start in an arbitrary position inside the source buffer. It may
+          # to start at an arbitrary position inside the source buffer. It may
           # encounter foreign rux tokens it's not expecting, etc. Best to stop
           # trying to look ahead and call it quits.
           break
@@ -121,6 +134,10 @@ module Rux
 
     def is_not?(tok, sym)
       tok && tok[0] != sym
+    end
+
+    def make_range(start, stop)
+      ::Parser::Source::Range.new(@source_buffer, start, stop)
     end
   end
 end

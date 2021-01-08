@@ -3,6 +3,7 @@ require 'csv'
 module Rux
   class RuxLexer
     class << self
+      # See: https://docs.google.com/spreadsheets/d/11ikKuySIKoaj-kFIfhlzebUwH31cRt_1flGjWfk7RMg
       def state_table
         @state_table ||= {}.tap do |table|
           state_table_data = CSV.read(state_table_path)
@@ -72,6 +73,8 @@ module Rux
         if ruby_code?(state)
           @eof = true
 
+          # @eof is set to false by reset_to above, which is called after
+          # popping the previous lexer off the lexer stack (see lexer.rb)
           while @eof
             yield [nil, ['$eof', pos]]
           end
@@ -87,6 +90,9 @@ module Rux
           when :tRUX_TAG_CLOSE
             tag_stack.pop
           when :tRUX_TAG_CLOSE_END
+            break if tag_stack.empty?
+          when :tRUX_TAG_SELF_CLOSING_END
+            tag_stack.pop
             break if tag_stack.empty?
         end
       end
@@ -108,6 +114,8 @@ module Rux
 
           next_chr = @source_pts[@p].chr
 
+          # no transition from the current state means we need to reset to the
+          # start state
           unless self.class.state_table[cur_state][next_chr]
             cur_state = :tRUX_START
           end
@@ -121,6 +129,9 @@ module Rux
       ::Parser::Source::Range.new(@source_buffer, start, stop)
     end
 
+    # Ruby code can only exist in two places: attribute values and inside tag
+    # bodies. Eventually I'd like to also allow passing a Ruby hash to
+    # dynamically specify attributes, but we're not there yet.
     def ruby_code?(state)
       state == :tRUX_ATTRIBUTE_VALUE_RUBY_CODE ||
         state == :tRUX_LITERAL_RUBY_CODE
