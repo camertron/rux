@@ -7,12 +7,8 @@ module Rux
         @str = str
       end
 
-      def to_ruby
-        str
-      end
-
-      def type
-        :string
+      def accept(visitor)
+        visitor.visit_string(self)
       end
     end
   end

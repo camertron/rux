@@ -1,36 +1,47 @@
 require 'cgi'
+require 'parser/current'
+require 'unparser'
 
 module Rux
-  autoload :AST,       'rux/ast'
-  autoload :Lex,       'rux/lex'
-  autoload :Lexer,     'rux/lexer'
-  autoload :Parser,    'rux/parser'
-  autoload :RubyLexer, 'rux/ruby_lexer'
-  autoload :RuxLexer,  'rux/rux_lexer'
-  autoload :Template,  'rux/template'
-  autoload :Utils,     'rux/utils'
+  autoload :AST,               'rux/ast'
+  autoload :DefaultTagBuilder, 'rux/default_tag_builder'
+  autoload :DefaultVisitor,    'rux/default_visitor'
+  autoload :File,              'rux/file'
+  autoload :Lex,               'rux/lex'
+  autoload :Lexer,             'rux/lexer'
+  autoload :Parser,            'rux/parser'
+  autoload :RubyLexer,         'rux/ruby_lexer'
+  autoload :RuxLexer,          'rux/rux_lexer'
+  autoload :Utils,             'rux/utils'
+  autoload :Visitor,           'rux/visitor'
 
   class << self
-    attr_accessor :compile_on_load
+    attr_accessor :compile_on_load, :tag_builder
+
+    def to_ruby(str, visitor = default_visitor)
+      ::Unparser.unparse(
+        ::Parser::CurrentRuby.parse(
+          visitor.visit(
+            Parser.parse(str)
+          )
+        )
+      )
+    end
+
+    def default_visitor
+      @default_visitor ||= DefaultVisitor.new
+    end
+
+    def default_tag_builder
+      @default_tag_builder ||= DefaultTagBuilder.new
+    end
 
     def compile_on_load?
       compile_on_load.call
     end
 
-    def tag(tag_name, attributes = {})
-      ("<#{tag_name} #{serialize_attrs(attributes)}>" <<
-        (block_given? ? Array(yield) : []).join <<
-        "</#{tag_name}>"
-      ).html_safe
-    end
-
-    def serialize_attrs(attributes)
-      ''.tap do |result|
-        attributes.each_pair.with_index do |(k, v), idx|
-          result << ' ' unless idx == 0
-          result << "#{k.to_s.gsub('-', '_')}=\"#{CGI.escape_html(v)}\""
-        end
-      end
+    def tag(tag_name, attributes = {}, &block)
+      tag_builder.call(tag_name, attributes, &block)
     end
 
     def library_paths
@@ -39,4 +50,5 @@ module Rux
   end
 
   self.compile_on_load = -> () { true }
+  self.tag_builder = self.default_tag_builder
 end

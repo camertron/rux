@@ -9,12 +9,8 @@ module Rux
         @text = text
       end
 
-      def to_ruby
-        "\"#{CGI.escape_html(text)}\".html_safe"
-      end
-
-      def type
-        :text
+      def accept(visitor)
+        visitor.visit_text(self)
       end
     end
   end

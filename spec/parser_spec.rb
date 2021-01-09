@@ -4,11 +4,7 @@ require 'unparser'
 
 describe Rux::Parser do
   def compile(rux_code)
-    Unparser.unparse(
-      ::Parser::CurrentRuby.parse(
-        described_class.parse(rux_code).to_ruby
-      )
-    )
+    Rux.to_ruby(rux_code)
   end
 
   it 'handles a single self-closing tag' do
@@ -26,7 +22,7 @@ describe Rux::Parser do
   it 'handles a single tag with a text body' do
     expect(compile("<Hello>foo</Hello>")).to eq(<<~RUBY.strip)
       render(Hello.new) {
-        "foo".html_safe
+        "foo"
       }
     RUBY
   end
@@ -118,7 +114,7 @@ describe Rux::Parser do
   it 'handles tag bodies with intermixed text and ruby code' do
     expect(compile('<Hello>abc {foo} def {bar} baz</Hello>')).to eq(<<~RUBY.strip)
       render(Hello.new) {
-        "abc ".html_safe << foo << " def ".html_safe << bar << " baz".html_safe
+        "abc " << foo << " def " << bar << " baz"
       }
     RUBY
   end
@@ -136,7 +132,7 @@ describe Rux::Parser do
       render(Outer.new) {
         5.times.map {
           render(Inner.new) {
-            "What a ".html_safe << @thing
+            "What a " << @thing
           }
         }
       }
@@ -146,7 +142,7 @@ describe Rux::Parser do
   it 'handles regular HTML tags' do
     expect(compile('<div>foo</div>')).to eq(<<~RUBY.strip)
       Rux.tag("div") {
-        "foo".html_safe
+        "foo"
       }
     RUBY
   end
@@ -164,7 +160,7 @@ describe Rux::Parser do
       render(Outer.new) {
         5.times.map {
           Rux.tag("div") {
-            "So ".html_safe << @cool
+            "So " << @cool
           }
         }
       }
@@ -174,7 +170,7 @@ describe Rux::Parser do
   it 'escapes HTML entities in strings' do
     expect(compile('<Hello>"foo"</Hello>')).to eq(<<~RUBY.strip)
       render(Hello.new) {
-        "&quot;foo&quot;".html_safe
+        "&quot;foo&quot;"
       }
     RUBY
   end

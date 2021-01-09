@@ -7,12 +7,8 @@ module Rux
         @code = code
       end
 
-      def to_ruby
-        code
-      end
-
-      def type
-        :ruby
+      def accept(visitor)
+        visitor.visit_ruby(self)
       end
     end
   end

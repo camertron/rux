@@ -24,7 +24,7 @@ module Rux
 
       def state_table_path
         @state_table_path ||=
-          File.expand_path(File.join('.', 'lex', 'states.csv'), __dir__)
+          ::File.expand_path(::File.join('.', 'lex', 'states.csv'), __dir__)
       end
 
       def parse_pattern(pattern)

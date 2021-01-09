@@ -7,12 +7,8 @@ module Rux
         @children = children
       end
 
-      def to_ruby
-        children.map(&:to_ruby).join
-      end
-
-      def type
-        :list
+      def accept(visitor)
+        visitor.visit_list(self)
       end
     end
   end
