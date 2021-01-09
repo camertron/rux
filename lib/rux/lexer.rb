@@ -1,5 +1,8 @@
 module Rux
   class Lexer
+    class EOFError < StandardError; end
+    class TransitionError < StandardError; end
+
     attr_reader :source_buffer
 
     def initialize(source_buffer)

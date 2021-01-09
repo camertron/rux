@@ -103,14 +103,25 @@ module Rux
       last_idx = @p
 
       loop do
+        check_eof
+
         chr = @source_pts[@p].chr
         cur_trans = self.class.state_table[cur_state][chr]
+
+        unless cur_trans
+          raise Rux::Lexer::TransitionError,
+            "no transition found from #{cur_state} at position #{@p} while "\
+            'lexing rux code'
+        end
+
         cur_state = cur_trans.to_state
         @p += cur_trans.advance_count
 
         if self.class.state_table[cur_state].terminal?
           token_text = @source_buffer.source[last_idx...@p]
           yield [cur_state, [token_text, make_range(last_idx, @p)]]
+
+          check_eof
 
           next_chr = @source_pts[@p].chr
 
@@ -122,6 +133,12 @@ module Rux
 
           last_idx = @p
         end
+      end
+    end
+
+    def check_eof
+      if @p >= @source_pts.length
+        raise Rux::Lexer::EOFError, 'unexpected end of rux input'
       end
     end
 

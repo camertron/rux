@@ -170,4 +170,32 @@ describe Rux::Parser do
       }
     RUBY
   end
+
+  it 'escapes HTML entities in strings' do
+    expect(compile('<Hello>"foo"</Hello>')).to eq(<<~RUBY.strip)
+      render(Hello.new) {
+        "&quot;foo&quot;".html_safe
+      }
+    RUBY
+  end
+
+  it 'raises an error on premature end of input' do
+    expect { compile('<Hello') }.to raise_error(Rux::Lexer::EOFError)
+  end
+
+  it 'raises an error when no state transition can be found' do
+    expect { compile('<Hello <foo>') }.to(
+      raise_error(Rux::Lexer::TransitionError,
+        'no transition found from tRUX_ATTRIBUTE_SPACES_BODY at position 7 '\
+          'while lexing rux code')
+    )
+  end
+
+  it 'raises an error on tag mismatch' do
+    expect { compile('<Hello></Goodbye>') }.to(
+      raise_error(Rux::Parser::TagMismatchError,
+        "closing tag 'Goodbye' on line 1 did not match opening tag 'Hello' "\
+        'on line 1')
+    )
+  end
 end

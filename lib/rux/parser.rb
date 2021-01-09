@@ -47,7 +47,9 @@ module Rux
         elsif type_of(current) == :tRUX_TAG_OPEN_START
           children << tag
         else
-          binding.pry
+          raise UnexpectedTokenError,
+            'expected ruby code or the start of a rux tag but found '\
+              "#{type_of(current)} instead"
         end
       end
 

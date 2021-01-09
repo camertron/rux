@@ -17,7 +17,7 @@ module Rux
       @p = init_pos
     end
 
-    alias :advance_orig :advance
+    alias_method :advance_orig, :advance
 
     def advance
       @generator.next
