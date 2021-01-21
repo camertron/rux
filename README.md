@@ -18,7 +18,7 @@ For a long time, Rails didn't really have any support for components, preferring
 
 ### View Component Example
 
-A view component is just classes. The actual view portion is usually stored in a secondary template file that the component renders in the context of an instance of that class. For example, here's a very basic view component that displays a person's name on the page:
+A view component is just a class. The actual view portion is usually stored in a secondary template file that the component renders in the context of an instance of that class. For example, here's a very basic view component that displays a person's name on the page:
 
 ```ruby
 # app/components/name_component.rb
@@ -87,6 +87,7 @@ As you can see, the span tag was converted to a `Rux.tag` call. The instance var
 Things get even more interesting when it comes to rendering components inside other components. Let's create a greeting component that makes use of the name component:
 
 ```ruby
+# app/components/greeting_component.rux
 class GreetingComponent < ViewComponent::Base
   def call
     <div>
@@ -112,9 +113,43 @@ class GreetingComponent < ViewComponent::Base
 end
 ```
 
-The `<NameComponent>` tag was translated into creating an instance of the `NameComponent` class and the attributes into its keyword arguments.
+The `<NameComponent>` tag was translated into an instance of the `NameComponent` class and the attributes into its keyword arguments.
 
 **NOTE**: The `render` method is provided by `ViewComponent::Base`.
+
+## Embedding Ruby
+
+Since rux code is translated into Ruby code, anything goes. You're free to put any valid Ruby statements inside the curly braces.
+
+For example, let's say we want to change our greeting component to greet a variable number of people:
+
+```ruby
+# app/components/greeting_component.rux
+class GreetingComponent < ViewComponent::Base
+  def initialize(people:)
+    # people is an array of hashes containing :first_name and :last_name
+    # keys
+    @people = people
+  end
+
+  def call
+    <div>
+      {@people.each do |person|
+        <NameComponent
+          first-name={person[:first_name]}
+          last-name={person[:last_name]}
+        />
+      end}
+    </div>
+  end
+end
+```
+
+Notice we were able to embed Ruby within rux within Ruby within rux. Within Ruby. The rux parser supports unlimited levels of nesting, although you'll probably not want to go _too_ crazy.
+
+## How it Works
+
+Rux is half its own lexer/parser and half a wrapper around the [Parser gem](https://github.com/whitequark/parser).
 
 ## Running Tests
 
