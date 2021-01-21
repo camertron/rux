@@ -14,6 +14,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'unparser', '~> 0.5'
 
   s.require_path = 'lib'
+  s.executables << 'ruxc'
 
   s.files = Dir['{lib,spec}/**/*', 'Gemfile', 'LICENSE', 'CHANGELOG.md', 'README.md', 'Rakefile', 'rux.gemspec']
 end

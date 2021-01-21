@@ -1,0 +1,5 @@
+#! /usr/bin/env ruby
+
+require 'rux'
+
+puts Rux::File.new(ARGV[0]).to_ruby
