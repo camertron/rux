@@ -18,12 +18,12 @@ For a long time, Rails didn't really have any support for components, preferring
 
 ### View Component Example
 
-View components are just classes. The actual view portion is usually stored in a secondary template file that the component renders in the context of an instance of that class. For example, here's a very basic view component that displays a person's name on the page:
+A view component is just classes. The actual view portion is usually stored in a secondary template file that the component renders in the context of an instance of that class. For example, here's a very basic view component that displays a person's name on the page:
 
 ```ruby
 # app/components/name_component.rb
 class NameComponent < ViewComponent::Base
-  def initialize(first_name, last_name)
+  def initialize(first_name:, last_name:)
     @first_name = first_name
     @last_name = last_name
   end
@@ -32,7 +32,7 @@ end
 
 ```html+erb
 <%# app/components/name_component.html.erb %>
-<div>Hey there <%= @first_name %> <%= last_name %>!</div>
+<span><%= @first_name %> <%= last_name %></span>
 ```
 
 View components have a number of very nice properties. Read about them on [viewcomponent.org](https://viewcomponent.org/) or watch Joel Hawksley's excellent 2019 [Railsconf talk](https://www.youtube.com/watch?v=y5Z5a6QdA-M).
@@ -44,7 +44,7 @@ Rux does one thing: it lets you write HTML in your Ruby code. Here's the name co
 ```ruby
 # app/components/name_component.rux
 class NameComponent < ViewComponent::Base
-  def initialize(first_name, last_name)
+  def initialize(first_name:, last_name:)
     @first_name = first_name
     @last_name = last_name
   end
@@ -63,7 +63,7 @@ Next, we'll run the `ruxc` tool to translate the rux code into Ruby code, eg. `r
 
 ```ruby
 class NameComponent < ViewComponent::Base
-  def initialize(first_name, last_name)
+  def initialize(first_name:, last_name:)
     @first_name = first_name
     @last_name = last_name
   end
@@ -80,9 +80,11 @@ class NameComponent < ViewComponent::Base
 end
 ```
 
+As you can see, the span tag was converted to a `Rux.tag` call. The instance variables containing the first and last names are concatenated together and rendered inside the span.
+
 ## Composing Components
 
-Things get even more interesting when it comes to rendering components inside other components. Let's create a greeting component that renders the name component:
+Things get even more interesting when it comes to rendering components inside other components. Let's create a greeting component that makes use of the name component:
 
 ```ruby
 class GreetingComponent < ViewComponent::Base
@@ -102,15 +104,17 @@ class GreetingComponent < ViewComponent::Base
     Rux.tag("div") {
       Rux.create_buffer.tap { |_rux_buf_,|
         _rux_buf_ << " Hey there "
-        _rux_buf_ << render(
-          NameComponent.new(first_name: "Homer", last_name: "Simpson")
-        )
+        _rux_buf_ << render(NameComponent.new(first_name: "Homer", last_name: "Simpson"))
         _rux_buf_ << "! "
       }.to_s
     }
   end
 end
 ```
+
+The `<NameComponent>` tag was translated into creating an instance of the `NameComponent` class and the attributes into its keyword arguments.
+
+**NOTE**: The `render` method is provided by `ViewComponent::Base`.
 
 ## Running Tests
 
