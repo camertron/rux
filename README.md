@@ -1,4 +1,4 @@
-## arel-helpers [![Build Status](https://secure.travis-ci.org/camertron/rux.png?branch=master)](http://travis-ci.org/camertron/rux)
+## rux [![Build Status](https://secure.travis-ci.org/camertron/rux.png?branch=master)](http://travis-ci.org/camertron/rux)
 
 Rux is a JSX-inspired way to write HTML tags in your Ruby code. While it can be used to write view components in Rails via the [rux-rails gem](https://github.com/camertron/rux-rails), this repo contains only the rux parser itself.
 
