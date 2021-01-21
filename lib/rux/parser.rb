@@ -183,8 +183,12 @@ module Rux
       else
         lit = text_of(current)
         consume(:tRUX_LITERAL)
-        AST::TextNode.new(lit.squeeze(' ')) unless lit.strip.empty?
+        AST::TextNode.new(squeeze_lit(lit)) unless lit.strip.empty?
       end
+    end
+
+    def squeeze_lit(lit)
+      lit.gsub(/\s/, ' ').squeeze(' ')
     end
 
     def literal_ruby_code

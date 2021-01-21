@@ -114,7 +114,13 @@ describe Rux::Parser do
   it 'handles tag bodies with intermixed text and ruby code' do
     expect(compile('<Hello>abc {foo} def {bar} baz</Hello>')).to eq(<<~RUBY.strip)
       render(Hello.new) {
-        "abc " << foo << " def " << bar << " baz"
+        Rux.create_buffer.tap { |_rux_buf_,|
+          _rux_buf_ << "abc "
+          _rux_buf_ << foo
+          _rux_buf_ << " def "
+          _rux_buf_ << bar
+          _rux_buf_ << " baz"
+        }.to_s
       }
     RUBY
   end
@@ -132,7 +138,10 @@ describe Rux::Parser do
       render(Outer.new) {
         5.times.map {
           render(Inner.new) {
-            "What a " << @thing
+            Rux.create_buffer.tap { |_rux_buf_,|
+              _rux_buf_ << "What a "
+              _rux_buf_ << @thing
+            }.to_s
           }
         }
       }
@@ -160,7 +169,10 @@ describe Rux::Parser do
       render(Outer.new) {
         5.times.map {
           Rux.tag("div") {
-            "So " << @cool
+            Rux.create_buffer.tap { |_rux_buf_,|
+              _rux_buf_ << "So "
+              _rux_buf_ << @cool
+            }.to_s
           }
         }
       }

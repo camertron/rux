@@ -16,32 +16,46 @@ module Rux
 
     def visit_tag(node)
       ''.tap do |result|
-        at = node.attrs.map { |k, v| Utils.attr_to_hash_elem(k, visit(v)) }.join(', ')
+        block_arg = if (as = node.attrs['as'])
+          visit(as)
+        end
+
+        at = node.attrs.each_with_object([]) do |(k, v), ret|
+          next if k == 'as'
+          ret << Utils.attr_to_hash_elem(k, visit(v))
+        end
 
         if node.name.start_with?(/[A-Z]/)
           result << "render(#{node.name}.new"
 
           unless node.attrs.empty?
-            result << "({ #{at} })"
+            result << "({ #{at.join(', ')} })"
           end
         else
           result << "Rux.tag('#{node.name}'"
 
           unless node.attrs.empty?
-            result << ", { #{at} }"
+            result << ", { #{at.join(', ')} }"
           end
         end
 
         result << ')'
 
-        unless node.children.empty?
-          rendered_children = node.children.map do |child|
-            visit(child)
+        if node.children.size > 1
+          result << " { "
+          result << "|#{block_arg}| " if block_arg
+          result << "Rux.create_buffer.tap { |_rux_buf_| "
+
+          node.children.each do |child|
+            result << "_rux_buf_ << #{visit(child).strip};"
           end
 
-          result << " do\n"
-          result << rendered_children.join(" << ")
-          result << "\nend"
+          result << " }.to_s }"
+        elsif node.children.size == 1
+          result << ' { '
+          result << "|#{block_arg}| " if block_arg
+          result << visit(node.children.first).strip
+          result << ' }'
         end
       end
     end
