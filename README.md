@@ -149,7 +149,55 @@ Notice we were able to embed Ruby within rux within Ruby within rux. Within Ruby
 
 ## How it Works
 
-Rux is half its own lexer/parser and half a wrapper around the [Parser gem](https://github.com/whitequark/parser).
+Translating rux code (Ruby + HTML tags) into Ruby code happens in three phases: lexing, parsing, and emitting. The lexer phase is implemented as a wrapper around the lexer from the [Parser gem](https://github.com/whitequark/parser) that looks for specific patterns in the token stream. When it finds an opening HTML tag, it hands off lexing to the rux lexer. When the tag ends, the lexer continues emitting Ruby tokens, and so on.
+
+In the parsing phase, the token stream is transformed into an intermediate representation of the code known as an abstract syntax tree, or AST. It's the parser's job to work out which tags are children of other tags, associate attributes with tags, etc.
+
+Finally it's time to generate Ruby code in the emitting phase. The rux gem makes use of the visitor pattern to walk over all the nodes in the AST and generate a big string of Ruby code. This big string is the final product that can be written to a file and executed by the Ruby interpreter.
+
+## Transpiling Rux to Ruby
+
+While the `ruxc` tool is a convenient way to transpile rux to Ruby via the command line, it's also possible to do so programmatically.
+
+### Transpiling Strings
+
+Let's say you have a string containing a bunch of rux code. You can transpile it to Ruby like so:
+
+```ruby
+require 'rux'
+
+str = 'some rux code'
+Rux.to_ruby(str)
+```
+
+**NOTE**: The `to_ruby` method accepts a visitor instance as its second argument (see below for more information about creating custom visitors). It uses the default visitor if no second argument is provided.
+
+### Transpiling Files
+
+Rux comes with a handy `File` class to make transpiling files easier:
+
+```ruby
+require 'rux'
+
+f = Rux::File.new('path/to/some/file.rux')
+
+# get result as a string, same as calling Rux.to_ruby
+f.to_ruby
+
+# write result to path/to/some/file.ruxc
+f.write
+
+# write result to the given file
+f.write('somewhere/else/file.ruxc')
+
+# the default file the result will be written, i.e. the location
+# #write will write to
+f.default_outfile
+```
+
+## The .ruxc File Extension
+
+By default, `Rux::File` will write to files ending with the .ruxc file extension. While it might at first glance seem to make more sense to write .rb files, I decided to use .ruxc so .rux files can be `require`d in environments like Rails applications. Since `require` assumes the file extension is always .rb, there's no way to distinguish between .rux files and their transpiled counterparts without searching the load path every time _any_ file is `require`d. The .ruxc file extension provides a short-circuit - we only have to search the load path if `require` raises a `LoadError`.
 
 ## Running Tests
 
