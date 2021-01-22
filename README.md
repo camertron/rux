@@ -1,6 +1,6 @@
-## rux [![Build Status](https://secure.travis-ci.org/camertron/rux.png?branch=master)](http://travis-ci.org/camertron/rux)
+## rux [![Build Status](https://travis-ci.com/camertron/rux.svg?branch=master)](https://travis-ci.com/camertron/rux)
 
-Rux is a JSX-inspired way to write HTML tags in your Ruby code. While it can be used to write view components in Rails via the [rux-rails gem](https://github.com/camertron/rux-rails), this repo contains only the rux parser itself.
+Rux is a JSX-inspired way to write HTML tags in your Ruby code. It can be used to render view components in Rails via the [rux-rails gem](https://github.com/camertron/rux-rails). This repo however contains only the rux parser itself.
 
 ## Introduction
 
@@ -206,7 +206,7 @@ Visitors should inherit from the `Rux::Visitor` class and implement the various 
 
 ## Custom Tag Builders
 
-The `Rux.tag` method emits HTML tags via the configured tag builder. You can configure a custom tag builder by setting `Rux.tag_builder` to any object that responds to the `call` method (and accepts two arguments). For example:
+The `Rux.tag` method emits HTML tags via the configured tag builder. You can configure a custom tag builder by setting `Rux.tag_builder` to any object that responds to the `call` method (and accepts three arguments). For example:
 
 ```ruby
 class MyTagBuilder
