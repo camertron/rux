@@ -39,7 +39,7 @@ View components have a number of very nice properties. Read about them on [viewc
 
 ## HTML in Your Ruby
 
-Rux does one thing: it lets you write HTML in your Ruby code. Here's the name component example from earlier rewritten in rux (sorry about the syntax highlighting, Github doesn't know about rux... yet).
+Rux does one thing: it lets you write HTML in your Ruby code. Here's the name component example from earlier rewritten in rux (sorry about the syntax highlighting, Github doesn't know about rux yet).
 
 ```ruby
 # app/components/name_component.rux
@@ -127,8 +127,7 @@ For example, let's say we want to change our greeting component to greet a varia
 # app/components/greeting_component.rux
 class GreetingComponent < ViewComponent::Base
   def initialize(people:)
-    # people is an array of hashes containing :first_name and :last_name
-    # keys
+    # people is an array of hashes containing :first_name and :last_name keys
     @people = people
   end
 
@@ -195,9 +194,74 @@ f.write('somewhere/else/file.ruxc')
 f.default_outfile
 ```
 
-## The .ruxc File Extension
+### The .ruxc File Extension
 
 By default, `Rux::File` will write to files ending with the .ruxc file extension. While it might at first glance seem to make more sense to write .rb files, I decided to use .ruxc so .rux files can be `require`d in environments like Rails applications. Since `require` assumes the file extension is always .rb, there's no way to distinguish between .rux files and their transpiled counterparts without searching the load path every time _any_ file is `require`d. The .ruxc file extension provides a short-circuit - we only have to search the load path if `require` raises a `LoadError`.
+
+## Custom Visitors
+
+Rux comes with a default visitor capable of emitting Ruby code that is mostly compatible with the view_component gem discussed earlier. A little bit of extra work is required to render rux components in Rails, which is why the rux-rails gem uses a modified version of the default visitor to emit Ruby code that will render correctly in Rails views. It's likely other frameworks that want to render rux components will need a custom visitor as well.
+
+Visitors should inherit from the `Rux::Visitor` class and implement the various methods. See lib/rux/visitor.rb for details. If you're looking to tweak the default visitor, inherit from `Rux::DefaultVisitor` instead, and see lib/rux/default_visitor.rb for details.
+
+## Custom Tag Builders
+
+The `Rux.tag` method emits HTML tags via the configured tag builder. You can configure a custom tag builder by setting `Rux.tag_builder` to any object that responds to the `call` method (and accepts two arguments). For example:
+
+```ruby
+class MyTagBuilder
+  def call(tag_name, attributes = {}, &block)
+    # Should return a string, eg. '<div foo="bar"></div>'.
+    # When called, the block should return the tag's body contents.
+  end
+end
+
+Rux.tag_builder = MyTagBuilder.new
+```
+
+Or, since the only requirement is that the tag builder respond to `#call`, you could pass a lambda:
+
+```ruby
+Rux.tag_builder = -> (tag_name, attributes = {}, &block) do
+  # Should return a string, eg. '<div foo="bar"></div>'.
+  # When called, the block should return the tag's body contents.
+end
+```
+
+## Custom Buffers
+
+You may have noticed calls to `Rux.create_buffer` in the code examples above. Rux comes with a default buffer implementation, but you can configure a custom one as well. The rux-rails gem for example configures rux to use `ActiveSupport::SafeBuffer` in order to be compatible with Rails view rendering. Buffer implementations only need to define two methods: `#>>` and `#to_s`:
+
+```ruby
+class MyBuffer
+  def initialize
+    @buffer = ''
+  end
+
+  def <<(thing)
+    # it's important to handle nils here
+    @buffer << (thing || '')
+  end
+
+  def to_s
+    @buffer
+  end
+end
+
+Rux.buffer = MyBuffer
+```
+
+## The Library Path
+
+It is my hope that, in the future, Ruby and Rails devs will publish collections of view components in gem form that other devs can use in their own projects. Maybe some of those view component libraries will even be written in rux. Accordingly, I wanted a way of adding rux components to Rails' eager load system, but without actually depending on Rails.
+
+The rux library path is a way for libraries written in rux to register themselves. The rux-rails gem automatically appends every entry in the library path to the Rails eager load and autoload paths so .rux files are automatically reloaded in development mode. Hopefully the library path enables other frameworks to do something similar.
+
+Adding a path is done like so:
+
+```ruby
+Rux.library_paths << 'path/to/dir/with/rux/files'
+```
 
 ## Running Tests
 
