@@ -133,7 +133,7 @@ class GreetingComponent < ViewComponent::Base
 
   def call
     <div>
-      {@people.each do |person|
+      {@people.map do |person|
         <NameComponent
           first-name={person[:first_name]}
           last-name={person[:last_name]}
