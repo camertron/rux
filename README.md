@@ -168,6 +168,14 @@ end
 
 In other words, positional arguments are not allowed. This is because there's no such thing as a positional HTML attribute - all HTML attributes are key/value pairs. So, in order to match up with HTML, rux components are written with keyword arguments.
 
+Note also that the rux parser will replace dashes with underscores in rux tag attributes to adhere to both HTML and Ruby syntax conventions, since HTML attributes use dashes while Ruby keyword arguments use underscores. For example, here's how to write a rux tag for `MyComponent` above:
+
+```ruby
+<MyComponent first-name="Homer" last-name="Simpson" />
+```
+
+Notice that the rux attribute "first-name" is passed to `MyComponent#initialize` as "first_name".
+
 ## How it Works
 
 Translating rux code (Ruby + HTML tags) into Ruby code happens in three phases: lexing, parsing, and emitting. The lexer phase is implemented as a wrapper around the lexer from the [Parser gem](https://github.com/whitequark/parser) that looks for specific patterns in the token stream. When it finds an opening HTML tag, it hands off lexing to the rux lexer. When the tag ends, the lexer continues emitting Ruby tokens, and so on.
