@@ -18,7 +18,7 @@ module Rux
   autoload :Visitor,           'rux/visitor'
 
   class << self
-    attr_accessor :compile_on_load, :tag_builder, :buffer
+    attr_accessor :tag_builder, :buffer
 
     def to_ruby(str, visitor = default_visitor)
       ::Unparser.unparse(
@@ -42,10 +42,6 @@ module Rux
       @default_buffer ||= Buffer
     end
 
-    def compile_on_load?
-      compile_on_load.call
-    end
-
     def tag(tag_name, attributes = {}, &block)
       tag_builder.call(tag_name, attributes, &block)
     end
@@ -59,7 +55,6 @@ module Rux
     end
   end
 
-  self.compile_on_load = -> () { true }
   self.tag_builder = self.default_tag_builder
   self.buffer = self.default_buffer
 end

@@ -146,6 +146,28 @@ end
 
 Notice we were able to embed Ruby within rux within Ruby within rux. Within Ruby. The rux parser supports unlimited levels of nesting, although you'll probably not want to go _too_ crazy.
 
+## Keyword Arguments Only
+
+Any view component that will be rendered by rux must _only_ accept keyword arguments in its constructor. For example:
+
+```ruby
+class MyComponent < ViewComponent::Base
+  # GOOD
+  def initialize(first_name:, last_name:)
+  end
+
+  # BAD
+  def initialize(first_name, last_name)
+  end
+
+  # BAD
+  def initialize(first_name, last_name = 'Simpson')
+  end
+end
+```
+
+In other words, positional arguments are not allowed. This is because there's no such thing as a positional HTML attribute - all HTML attributes are key/value pairs. So, in order to match up with HTML, rux components are written with keyword arguments.
+
 ## How it Works
 
 Translating rux code (Ruby + HTML tags) into Ruby code happens in three phases: lexing, parsing, and emitting. The lexer phase is implemented as a wrapper around the lexer from the [Parser gem](https://github.com/whitequark/parser) that looks for specific patterns in the token stream. When it finds an opening HTML tag, it hands off lexing to the rux lexer. When the tag ends, the lexer continues emitting Ruby tokens, and so on.
