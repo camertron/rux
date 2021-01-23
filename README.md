@@ -293,6 +293,12 @@ Adding a path is done like so:
 Rux.library_paths << 'path/to/dir/with/rux/files'
 ```
 
+## Editor Support
+
+Sublime Text: [https://github.com/camertron/rux-SublimeText](https://github.com/camertron/rux-SublimeText)
+Atom: [https://github.com/camertron/rux-atom](https://github.com/camertron/rux-atom)
+VSCode: [https://github.com/camertron/rux-vscode](https://github.com/camertron/rux-vscode)
+
 ## Running Tests
 
 `bundle exec rspec` should do the trick.
