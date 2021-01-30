@@ -20,13 +20,12 @@ module Rux
   class << self
     attr_accessor :tag_builder, :buffer
 
-    def to_ruby(str, visitor = default_visitor)
+    def to_ruby(str, visitor: default_visitor, pretty: true)
+      ruby_code = visitor.visit(Parser.parse(str))
+      return ruby_code unless pretty
+
       ::Unparser.unparse(
-        ::Parser::CurrentRuby.parse(
-          visitor.visit(
-            Parser.parse(str)
-          )
-        )
+        ::Parser::CurrentRuby.parse(ruby_code)
       )
     end
 

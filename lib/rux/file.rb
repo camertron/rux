@@ -6,12 +6,12 @@ module Rux
       @path = path
     end
 
-    def to_ruby(visitor = Rux.default_visitor)
-      Rux.to_ruby(contents, visitor)
+    def to_ruby(visitor: Rux.default_visitor, **kwargs)
+      Rux.to_ruby(contents, visitor: visitor, **kwargs)
     end
 
-    def write(outfile = nil)
-      ::File.write(outfile || default_outfile, to_ruby)
+    def write(outfile = nil, **kwargs)
+      ::File.write(outfile || default_outfile, to_ruby(**kwargs))
     end
 
     def default_outfile
