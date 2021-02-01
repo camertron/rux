@@ -15,7 +15,7 @@ module Rux
     end
 
     def default_outfile
-      @outfile ||= "#{path.chomp('.rux')}.ruxc"
+      @outfile ||= "#{path.chomp('.rux')}.rb"
     end
 
     private
