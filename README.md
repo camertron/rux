@@ -213,20 +213,16 @@ f = Rux::File.new('path/to/some/file.rux')
 # get result as a string, same as calling Rux.to_ruby
 f.to_ruby
 
-# write result to path/to/some/file.ruxc
+# write result to path/to/some/file.rb
 f.write
 
 # write result to the given file
-f.write('somewhere/else/file.ruxc')
+f.write('somewhere/else/file.rb')
 
 # the default file the result will be written, i.e. the location
 # #write will write to
 f.default_outfile
 ```
-
-### The .ruxc File Extension
-
-By default, `Rux::File` will write to files ending with the .ruxc file extension. While it might at first glance seem to make more sense to write .rb files, I decided to use .ruxc so .rux files can be `require`d in environments like Rails applications. Since `require` assumes the file extension is always .rb, there's no way to distinguish between .rux files and their transpiled counterparts without searching the load path every time _any_ file is `require`d. The .ruxc file extension provides a short-circuit - we only have to search the load path if `require` raises a `LoadError`.
 
 ## Custom Visitors
 
