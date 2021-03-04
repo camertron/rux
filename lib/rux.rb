@@ -14,6 +14,8 @@ module Rux
   autoload :Parser,            'rux/parser'
   autoload :RubyLexer,         'rux/ruby_lexer'
   autoload :RuxLexer,          'rux/rux_lexer'
+  autoload :StateMachine,      'rux/state_machine'
+  autoload :StateTable,        'rux/state_table'
   autoload :Utils,             'rux/utils'
   autoload :Visitor,           'rux/visitor'
 
