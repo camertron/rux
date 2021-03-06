@@ -2,11 +2,12 @@ require 'csv'
 
 module Rux
   class StateTable
-    attr_reader :path, :start_state
+    attr_reader :path, :start_state, :state_prefix
 
-    def initialize(path, start_state)
+    def initialize(path, start_state, state_prefix)
       @path = path
-      @start_state = start_state
+      @start_state = :"#{state_prefix}#{start_state}"
+      @state_prefix = state_prefix
     end
 
     def [](state)
@@ -31,7 +32,7 @@ module Rux
         state_table_data[1..-1].each do |row|
           next unless row[0]  # allows blank lines in csv
 
-          state = Lex::State.parse(row[0], row[1..-1], inputs)
+          state = Lex::State.parse(row[0], row[1..-1], inputs, state_prefix)
           table[state.name] = state
         end
       end

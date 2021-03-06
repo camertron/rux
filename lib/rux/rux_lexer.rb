@@ -1,8 +1,8 @@
 module Rux
-  class RuxLexer
+  class RuxLexer < StateBasedLexer
     class << self
       def state_table
-        @state_table ||= StateTable.new(state_table_path, :tRUX_START)
+        @state_table ||= StateTable.new(state_table_path, :START, 'tRUX_')
       end
 
       private
@@ -16,22 +16,16 @@ module Rux
 
 
     def initialize(source_buffer, init_pos)
-      @state_machine = StateMachine.new(
-        self.class.state_table, source_buffer, init_pos
-      )
-
       @eof = false
-      @generator = to_enum(:each_token)
-    end
-
-    def advance
-      @generator.next
-    rescue StopIteration
-      [nil, ['$eof']]
+      super(
+        StateMachine.new(
+          self.class.state_table, source_buffer, init_pos
+        )
+      )
     end
 
     def reset_to(pos)
-      @state_machine.reset_to(pos)
+      super
       @eof = false
     end
 

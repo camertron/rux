@@ -49,7 +49,7 @@ module Rux
           # no transition from the current state means we need to reset to the
           # start state
           unless @state_table[cur_state][next_chr]
-            cur_state = :tRUX_START
+            cur_state = @state_table.start_state
           end
 
           last_idx = @pos
