@@ -5,6 +5,7 @@ require 'unparser'
 module Rux
   autoload :AnnotationLexer,   'rux/annotation_lexer'
   autoload :AST,               'rux/ast'
+  autoload :BaseLexer,         'rux/base_lexer'
   autoload :Buffer,            'rux/buffer'
   autoload :Component,         'rux/component'
   autoload :DefaultTagBuilder, 'rux/default_tag_builder'

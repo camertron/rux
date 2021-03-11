@@ -70,14 +70,14 @@ module Rux
 
     def initialize(source_buffer, init_pos)
       @source_buffer = source_buffer
-      @lexer = RubyLexer.new(source_buffer, init_pos)
+      @lexer = BaseLexer.new(source_buffer, init_pos)
       @generator = to_enum(:each_token)
       @current = get_next
       @scope_stack = [TopLevelScope.new]
     end
 
-    def method_missing(method_name, *args, **kwargs, &block)
-      @lexer.send(method_name, *args, **kwargs, &block)
+    def reset_to(pos)
+      @lexer.reset_to(pos)
     end
 
     def advance
@@ -178,8 +178,12 @@ module Rux
       consume(:kDEF, block)
       method_name = text_of(current)
       consume(:tIDENTIFIER, block)
-      consume(:tLPAREN2, block)
-      args = handle_args(block)
+      args = []
+
+      if type_of(current) == :tLPAREN2
+        consume(:tLPAREN2, block)
+        args = handle_args(block)
+      end
 
       return_type = if type_of(current) == :tLAMBDA
         consume(:tLAMBDA)
@@ -212,12 +216,16 @@ module Rux
       label = current
       arg_name = text_of(label)
 
-      arg_type = if type_of(current) == :tLABEL
-        consume(:tLABEL)
-        block.call([:tIDENTIFIER, [arg_name, pos_of(label)]])
-        handle_type
-      else
-        Type.new(:untyped)
+      arg_type = case type_of(current)
+        when :tLABEL
+          consume(:tLABEL)
+          block.call([:tIDENTIFIER, [arg_name, pos_of(label)]])
+          handle_type
+        when :tIDENTIFIER
+          consume(:tIDENTIFIER, block)
+          Type.new(:untyped)
+        else
+          Type.new(:untyped)
       end
 
       Arg.new(arg_name, arg_type)

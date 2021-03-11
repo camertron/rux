@@ -7,8 +7,6 @@ module Rux
 
     def advance
       @generator.next
-    rescue StopIteration
-      [nil, ['$eof']]
     end
 
     def reset_to(pos)
@@ -16,7 +14,7 @@ module Rux
     end
 
     private
-    
+
     def each_token
       raise NotImplementedError,
         "`#{__name__}' must be defined in derived classes"

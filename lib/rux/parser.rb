@@ -59,30 +59,59 @@ module Rux
     private
 
     def ruby
-      ruby_start = pos_of(current).begin_pos
+      result = [].tap do |code|
+        loop do
+          type = type_of(current)
 
-      loop do
-        type = type_of(current)
+          if type.nil? || RuxLexer.state_table.include?(type_of(current))
+            break
+          end
 
-        if type.nil? || RuxLexer.state_table.include?(type_of(current))
-          break
+          case type
+            when :tNL
+              code << "\n"
+            when :kDO
+              # special case since lexer seems to not emit newlines that
+              # follow a "do"
+              code << "do "
+            else
+              code << text_of(current) || ''
+          end
+
+          consume(type_of(current))
         end
-
-        consume(type_of(current))
       end
 
-      unless type_of(current)
-        return AST::RubyNode.new(
-          @lexer.source_buffer.source[ruby_start..-1]
-        )
-      end
-
-      if pos_of(current).begin_pos != ruby_start
-        AST::RubyNode.new(
-          @lexer.source_buffer.source[ruby_start...(pos_of(current).end_pos - 1)]
-        )
-      end
+      # should be ok to join everything by spaces, ruby is quite permissive,
+      # plus hopefully we're prettifying everything anyway
+      result.empty? ? nil : AST::RubyNode.new(result.join(' '))
     end
+
+    # def ruby
+    #   ruby_start = pos_of(current).begin_pos
+
+    #   loop do
+    #     type = type_of(current)
+
+    #     if type.nil? || RuxLexer.state_table.include?(type_of(current))
+    #       break
+    #     end
+
+    #     consume(type_of(current))
+    #   end
+
+    #   unless type_of(current)
+    #     return AST::RubyNode.new(
+    #       @lexer.source_buffer.source[ruby_start..-1]
+    #     )
+    #   end
+
+    #   if pos_of(current).begin_pos != ruby_start
+    #     AST::RubyNode.new(
+    #       @lexer.source_buffer.source[ruby_start...(pos_of(current).end_pos - 1)]
+    #     )
+    #   end
+    # end
 
     def tag
       consume(:tRUX_TAG_OPEN_START)

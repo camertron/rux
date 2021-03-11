@@ -1,30 +1,20 @@
 module Rux
-  class RubyLexer < ::Parser::Lexer
-    # These are populated when ::Parser::Lexer loads and are therefore
-    # not inherited. We have to copy them over manually.
-    ::Parser::Lexer.instance_variables.each do |ivar|
-      instance_variable_set(ivar, ::Parser::Lexer.instance_variable_get(ivar))
-    end
-
+  class RubyLexer
     LOOKAHEAD = 3
 
     def initialize(source_buffer, init_pos)
-      super(ruby_version)
-
-      self.source_buffer = source_buffer
+      @source_buffer = source_buffer
+      @lexer = AnnotationLexer.new(source_buffer, init_pos)
       @generator = to_enum(:each_token)
       @rux_token_queue = []
-      @p = init_pos
     end
-
-    alias_method :advance_orig, :advance
 
     def advance
       @generator.next
     end
 
     def reset_to(pos)
-      @ts = @te = @p = pos
+      @lexer.reset_to(pos)
       @eof = false
       @rux_token_queue.clear
       populate_queue
@@ -36,13 +26,6 @@ module Rux
 
     private
 
-    def ruby_version
-      @ruby_version ||= RUBY_VERSION
-        .split('.')[0..-2]
-        .join('')
-        .to_i
-    end
-
     def each_token(&block)
       # We detect whether or not we're at the beginning of a rux tag by looking
       # ahead by 1 token; that's why the first element in @rux_token_queue is
@@ -50,7 +33,7 @@ module Rux
       # lookahead is a lot more difficult. To mitigate, we insert a dummy skip
       # token here. That way, at_rux? checks the right tokens in the queue and
       # correctly identifies the start of a rux tag.
-      @rux_token_queue << [:tSKIP, ['$skip', make_range(@p, @p)]]
+      @rux_token_queue << [:tSKIP, ['$skip', make_range(-1, -1)]]
 
       @eof = false
       curlies = 1
@@ -97,7 +80,7 @@ module Rux
     def populate_queue
       until @rux_token_queue.size >= LOOKAHEAD
         begin
-          cur_token = advance_orig
+          cur_token = @lexer.advance
         rescue NoMethodError
           # Internal lexer errors can happen since we're asking the ruby lexer
           # to start at an arbitrary position inside the source buffer. It may
