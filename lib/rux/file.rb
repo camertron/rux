@@ -1,13 +1,26 @@
+require 'parser/current'
+require 'unparser'
+
 module Rux
   class File
-    attr_reader :path
+    attr_reader :path, :visitor
 
-    def initialize(path)
+    def initialize(path, visitor: Rux.default_visitor)
       @path = path
+      @visitor = visitor
     end
 
-    def to_ruby(visitor: Rux.default_visitor, **kwargs)
-      Rux.to_ruby(contents, visitor: visitor, **kwargs)
+    def to_ruby(pretty: true)
+      ruby_code = visitor.visit(parse_result.ast)
+      return ruby_code unless pretty
+
+      ::Unparser.unparse(
+        ::Parser::CurrentRuby.parse(ruby_code)
+      )
+    end
+
+    def to_rbi
+      parse_result.context[:annotations].to_rbi
     end
 
     def write(outfile = nil, **kwargs)
@@ -15,10 +28,14 @@ module Rux
     end
 
     def default_outfile
-      @outfile ||= "#{path.chomp('.rux')}.rb"
+      @default_outfile ||= "#{path.chomp('.rux')}.rb"
     end
 
     private
+
+    def parse_result
+      @parse_result ||= Parser.parse(contents)
+    end
 
     def contents
       @contents ||= ::File.read(path)

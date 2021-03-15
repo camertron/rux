@@ -15,8 +15,12 @@ module Rux
     end
 
 
-    def initialize(source_buffer, init_pos)
+    attr_reader :context
+
+    def initialize(source_buffer, init_pos, context)
       @eof = false
+      @context = context
+
       super(
         StateMachine.new(
           self.class.state_table, source_buffer, init_pos
@@ -30,7 +34,7 @@ module Rux
     end
 
     def next_lexer(pos)
-      RubyLexer.new(@state_machine.source_buffer, pos)
+      RubyLexer.new(@state_machine.source_buffer, pos, context)
     end
 
     private

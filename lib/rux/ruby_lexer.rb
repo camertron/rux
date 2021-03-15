@@ -2,11 +2,14 @@ module Rux
   class RubyLexer
     LOOKAHEAD = 3
 
-    def initialize(source_buffer, init_pos)
+    attr_reader :context
+
+    def initialize(source_buffer, init_pos, context)
       @source_buffer = source_buffer
-      @lexer = AnnotationLexer.new(source_buffer, init_pos)
+      @lexer = AnnotationLexer.new(source_buffer, init_pos, context)
       @generator = to_enum(:each_token)
       @rux_token_queue = []
+      @context = context
     end
 
     def advance
@@ -21,7 +24,7 @@ module Rux
     end
 
     def next_lexer(pos)
-      RuxLexer.new(@source_buffer, pos)
+      RuxLexer.new(@source_buffer, pos, context)
     end
 
     private

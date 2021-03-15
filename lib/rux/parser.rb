@@ -5,20 +5,32 @@ module Rux
     class UnexpectedTokenError < StandardError; end
     class TagMismatchError < StandardError; end
 
+    class ParseResult
+      attr_reader :ast, :context
+
+      def initialize(ast, context)
+        @ast = ast
+        @context = context
+      end
+    end
+
     class << self
       def parse_file(path)
         buffer = ::Parser::Source::Buffer.new(path).read
         lexer = ::Rux::Lexer.new(buffer)
-        new(lexer).parse
+        parser = new(lexer)
+        ParseResult.new(parser.parse, lexer.context)
       end
 
       def parse(str)
         buffer = ::Parser::Source::Buffer.new('(source)', source: str)
         lexer = ::Rux::Lexer.new(buffer)
-        new(lexer).parse
+        parser = new(lexer)
+        ParseResult.new(parser.parse, lexer.context)
       end
     end
 
+    # TODO: handle comments
     def initialize(lexer)
       @lexer = lexer
       @stack = []
@@ -74,17 +86,22 @@ module Rux
               # special case since lexer seems to not emit newlines that
               # follow a "do"
               code << "do "
+            when :tCOLON2
+              # special case to avoid emitting "Parent :: Child," which unparser
+              # turns into "Parent(::Child)"
+              code.last.rstrip!
+              code << '::'
             else
-              code << text_of(current) || ''
+              code << "#{text_of(current)} "
           end
 
           consume(type_of(current))
         end
       end
 
-      # should be ok to join everything by spaces, ruby is quite permissive,
-      # plus hopefully we're prettifying everything anyway
-      result.empty? ? nil : AST::RubyNode.new(result.join(' '))
+      # Should be ok to join everything here. Ruby is quite permissive,
+      # plus hopefully we're prettifying everything anyway.
+      result.empty? ? nil : AST::RubyNode.new(result.join)
     end
 
     # def ruby

@@ -1,79 +1,21 @@
 module Rux
   class AnnotationLexer
-    class Scope
-      attr_reader :name, :methods, :scopes, :includes, :extends, :prepends
-
-      def initialize(name)
-        @name = name
-        @methods = []
-        @scopes = []
-        @includes = []
-        @extends = []
-        @prepends = []
-      end
-    end
-
-    class TopLevelScope < Scope
-      def initialize
-        super('(toplevel)')
-      end
-    end
-
-    class ModuleDef < Scope
-    end
-
-    class ClassDef < Scope
-      attr_reader :type, :super_type
-
-      def initialize(name, type, super_type)
-        super(name)
-        @type = type
-        @super_type = super_type
-      end
-    end
-
-    class MethodDef < Scope
-      attr_reader :name, :args, :return_type
-
-      def initialize(name, args, return_type)
-        @args = args
-        @return_type = return_type
-        super(name)
-      end
-    end
-
-    class Arg
-      attr_reader :name, :type
-
-      def initialize(name, type)
-        @name = name
-        @type = type
-      end
-    end
-
-    class Type
-      def initialize(const, subtypes = [])
-        @const = const
-        @subtypes = subtypes
-      end
-    end
-
-    class UnionType
-      def initialize(types)
-        @types = types
-      end
-    end
-
     class UnexpectedTokenError < StandardError; end
 
-    attr_reader :source_buffer
+    include Annotations
 
-    def initialize(source_buffer, init_pos)
+    attr_reader :source_buffer, :context
+
+    def initialize(source_buffer, init_pos, context)
       @source_buffer = source_buffer
-      @lexer = BaseLexer.new(source_buffer, init_pos)
+      @lexer = BaseLexer.new(source_buffer, init_pos, context)
       @generator = to_enum(:each_token)
       @current = get_next
-      @scope_stack = [TopLevelScope.new]
+      @context = context
+      @context[:annotations] ||= TopLevelScope.new
+      @top_level_scope = @context[:annotations]
+      @context[:annotation_scope_stack] ||= [@top_level_scope]
+      @scope_stack = @context[:annotation_scope_stack]
     end
 
     def reset_to(pos)
@@ -83,10 +25,21 @@ module Rux
     def advance
       @generator.next
     rescue StopIteration
+      @top_level_scope.type_sigil = type_sigil
       [nil, ['$eof']]
     end
 
     private
+
+    def type_sigil
+      @lexer.comments.each do |comment|
+        if comment.text =~ /\A#\s+typed:\s+(ignore|false|true|strict|strong)\z/
+          return Regexp.last_match.captures[0]
+        end
+      end
+
+      nil
+    end
 
     def current
       @current
@@ -127,19 +80,15 @@ module Rux
           when :tIDENTIFIER
             ident = text_of(current)
             consume(:tIDENTIFIER, block)
-            const = text_of(current)
 
             case ident
-              when 'include'
-                current_scope.includes << const
-                consume(:tCONSTANT, block)
-              when 'extend'
-                current_scope.extends << const
-                consume(:tCONSTANT, block)
-              when 'prepend'
-                current_scope.prepends << const
-                consume(:tCONSTANT, block)
+              when 'include', 'extend', 'prepend'
+                const = handle_constant(block)
+                current_scope.mixins << [ident.to_sym, const]
+              else
+                next
             end
+
           else
             consume(type_of(current), block)
         end
@@ -148,9 +97,8 @@ module Rux
 
     def handle_class(block)
       consume(:kCLASS, block)
-      const = current
-      block.call(const)
       class_type = handle_types
+      yield_all(class_type.const.tokens, block)
 
       # The ruby lexer can get stuck lexing parameterized types, eg class MyClass[T]
       # and returns an EOF token when there is more input text to process. Resetting
@@ -160,18 +108,18 @@ module Rux
 
       super_type = if type_of(current) == :tLT
         consume(:tLT, block)
-        block.call(current)
-        handle_types
+        handle_types.tap do |st|
+          yield_all(st.const.tokens, block)
+        end
       end
 
-      ClassDef.new(text_of(const), class_type, super_type)
+      ClassDef.new(class_type, super_type)
     end
 
     def handle_module(block)
       consume(:kMODULE, block)
-      name = text_of(current)
-      consume(:tCONSTANT)
-      ModuleDef.new(name)
+      const = handle_constant(block)
+      ModuleDef.new(const)
     end
 
     def handle_def(block)
@@ -188,11 +136,9 @@ module Rux
       return_type = if type_of(current) == :tLAMBDA
         consume(:tLAMBDA)
         handle_types
-      else
-        Type.new(:untyped)
       end
 
-      MethodDef.new(method_name, args, return_type)
+      MethodDef.new(method_name, Args.new(args), return_type)
     end
 
     def handle_args(block)
@@ -213,6 +159,13 @@ module Rux
     end
 
     def handle_arg(block)
+      block_arg = false
+
+      if type_of(current) == :tAMPER
+        block_arg = true
+        consume(:tAMPER, block)
+      end
+
       label = current
       arg_name = text_of(label)
 
@@ -228,10 +181,14 @@ module Rux
           Type.new(:untyped)
       end
 
-      Arg.new(arg_name, arg_type)
+      Arg.new(arg_name, arg_type, block_arg)
     end
 
     def handle_types
+      if type_of(current) == :tLBRACK
+        return handle_type_list
+      end
+
       types = [].tap do |types|
         loop do
           types << handle_type
@@ -255,21 +212,84 @@ module Rux
     end
 
     def handle_type
-      const = text_of(current)
-      consume(:tCONSTANT)
-      subtypes = []
+      if type_of(current) == :kNIL
+        consume(:kNIL)
+        return nil
+      end
+
+      const = handle_constant
+      return nil unless const
+
+      type_args = []
+      count = 0
 
       if type_of(current) == :tLBRACK2
         consume(:tLBRACK2)
 
         until type_of(current) == :tRBRACK
-          subtypes << handle_types
+          if type_args.size > 0
+            consume(:tCOMMA)
+          end
+
+          type_args << handle_types
         end
 
         consume(:tRBRACK)
       end
 
-      Type.new(const, subtypes)
+      Annotations.get_type(const, *type_args)
+    end
+
+    def handle_type_list
+      consume(:tLBRACK)
+
+      TypeList.new(
+        [].tap do |type_list|
+          until type_of(current) == :tRBRACK
+            if type_list.size > 0
+              consume(:tCOMMA)
+            end
+
+            type_list << handle_type
+          end
+
+          consume(:tRBRACK)
+        end
+      )
+    end
+
+    def handle_constant(block = nil)
+      return nil unless const_token?(current)
+
+      tokens = [].tap do |const_tokens|
+        loop do
+          if const_token?(current)
+            const_tokens << current
+            consume(type_of(current), block)
+          else
+            break
+          end
+        end
+      end
+
+      Constant.new(tokens)
+    end
+
+    def join(tokens)
+      tokens.map { |t| text_of(t) }.join
+    end
+
+    def yield_all(tokens, block)
+      tokens.each { |t| block.call(t) }
+    end
+
+    def const_token?(token)
+      case type_of(token)
+        when :tCONSTANT, :tCOLON2, :tCOLON3
+          true
+        else
+          false
+      end
     end
 
     def consume(types, block = nil)

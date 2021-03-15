@@ -6,20 +6,19 @@ module Rux
       instance_variable_set(ivar, ::Parser::Lexer.instance_variable_get(ivar))
     end
 
-    def initialize(source_buffer, init_pos)
+    def initialize(source_buffer, init_pos, context)
       super(ruby_version)
       self.source_buffer = source_buffer
+      context[:comments] = self.comments = []
       reset_to(init_pos)
     end
 
     def reset_to(pos)
-      puts "resetting to #{pos}"
       @ts = @te = @p = pos
     end
 
     def advance
       token = super
-      puts "#{token[0]}: #{token[1][0]}"
       token
     end
 
