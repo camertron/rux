@@ -4,6 +4,7 @@ module Rux
     autoload :Arg,           'rux/annotations/arg'
     autoload :Args,          'rux/annotations/args'
     autoload :ClassDef,      'rux/annotations/class_def'
+    autoload :IVar,          'rux/annotations/ivar'
     autoload :MethodDef,     'rux/annotations/method_def'
     autoload :ModuleDef,     'rux/annotations/module_def'
     autoload :Scope,         'rux/annotations/scope'

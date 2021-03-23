@@ -79,19 +79,56 @@ module Rux
             consume(:kEND, block)
           when :tIDENTIFIER
             ident = text_of(current)
-            consume(:tIDENTIFIER, block)
 
             case ident
+              when 'private', 'public'
+                if ivar = maybe_handle_ivar(block)
+                  current_scope.ivars << ivar
+                end
               when 'include', 'extend', 'prepend'
+                consume(:tIDENTIFIER, block)
                 const = handle_constant(block)
                 current_scope.mixins << [ident.to_sym, const]
               else
+                consume(type_of(current), block)
                 next
             end
 
           else
             consume(type_of(current), block)
         end
+      end
+    end
+
+    def maybe_handle_ivar(block)
+      modifiers = [current]
+      consume(:tIDENTIFIER)
+
+      while type_of(current) == :tIDENTIFIER
+        modifiers << current
+        consume(:tIDENTIFIER)
+      end
+
+      if type_of(current) != :tIVAR
+        modifiers.each { |mod| block.call(mod) }
+        return nil
+      end
+
+      ivar_token = current
+      name = text_of(current)
+      consume(:tIVAR)
+      consume(:tCOLON)
+      type = handle_types
+
+      modifiers.each do |modifier|
+        case text_of(modifier)
+          when 'attr_reader', 'attr_writer', 'attr_accessor'
+            block.call(modifier)
+        end
+      end
+
+      IVar.new(name, type, modifiers.map { |m| text_of(m) }).tap do |ivar|
+        block.call([:tSYMBOL, [ivar.symbol, pos_of(ivar_token)]])
       end
     end
 

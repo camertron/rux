@@ -19,6 +19,22 @@ module Rux
           end
           .join
       end
+
+      def sym_quote(str)
+        if str =~ /\A[^\d][\w\d]*\z/
+          str
+        else
+          "'#{str.gsub("'", '\\\'')}'"
+        end
+      end
+
+      def sym_join(key, value)
+        "#{sym_quote(key)}: #{value}"
+      end
+
+      def sym(str)
+        ":#{sym_quote(str)}"
+      end
     end
   end
 end

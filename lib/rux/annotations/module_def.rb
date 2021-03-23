@@ -3,7 +3,7 @@ module Rux
     class ModuleDef < Scope
       def to_rbi(level)
         ''.tap do |result|
-          result << indent("module #{name}\n", level)
+          result << indent("module #{type.to_ruby}\n", level)
           result << super(level + 1)
           result << indent("end\n", level)
         end

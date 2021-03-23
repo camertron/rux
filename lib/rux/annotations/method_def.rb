@@ -1,20 +1,21 @@
 module Rux
   module Annotations
-    class MethodDef < Scope
+    class MethodDef < Annotation
       attr_reader :name, :args, :return_type
 
       def initialize(name, args, return_type)
+        @name = name
         @args = args
         @return_type = return_type
-        super(name)
       end
 
       def to_rbi(level)
-        indent(<<~END, level)
-          #{sig}
-          def #{name}(#{args.to_ruby})
-          end
-        END
+        ''.tap do |result|
+          result << indent("#{sig}\n", level)
+          result << indent("def #{name}(#{args.to_ruby})\n", level)
+          result << "#{yield}\n" if block_given?
+          result << indent("end", level)
+        end
       end
 
       private

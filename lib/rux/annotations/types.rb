@@ -22,11 +22,11 @@ module Rux
       end
 
       def to_ruby
-        const
+        const.to_ruby
       end
 
       def sig
-        const.tap do |result|
+        const.to_ruby.tap do |result|
           unless args.empty?
             result << "[#{args.map(&:sig).join(', ')}]"
           end

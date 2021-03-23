@@ -14,7 +14,7 @@ module Rux
       end
 
       def sig
-        "#{name}: #{type.sig}"
+        sym_join(name, type.sig)
       end
     end
   end
