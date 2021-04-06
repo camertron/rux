@@ -1,3 +1,17 @@
+require 'stringio'
+
+# Racc uses LoadErrors for flow control and in certain ruby versions will
+# print one along with its stack trace when required. To avoid receiving a
+# long, arresting, and entirely irrelevant stack trace every time you invoke
+# rux, temporarily redirect STDOUT here and throw away the output.
+begin
+  old_stdout = $stdout
+  $stdout = StringIO.new
+  require 'racc'
+ensure
+  $stdout = old_stdout
+end
+
 require 'cgi'
 require 'parser/current'
 require 'unparser'
