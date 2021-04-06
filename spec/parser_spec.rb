@@ -136,14 +136,18 @@ describe Rux::Parser do
 
     expect(compile(rux_code)).to eq(<<~RUBY.strip)
       render(Outer.new) {
-        5.times.map {
-          render(Inner.new) {
-            Rux.create_buffer.tap { |_rux_buf_,|
-              _rux_buf_ << "What a "
-              _rux_buf_ << @thing
-            }.to_s
+        Rux.create_buffer.tap { |_rux_buf_,|
+          _rux_buf_ << " "
+          _rux_buf_ << 5.times.map {
+            render(Inner.new) {
+              Rux.create_buffer.tap { |_rux_buf_,|
+                _rux_buf_ << "What a "
+                _rux_buf_ << @thing
+              }.to_s
+            }
           }
-        }
+          _rux_buf_ << " "
+        }.to_s
       }
     RUBY
   end
@@ -167,14 +171,18 @@ describe Rux::Parser do
 
     expect(compile(rux_code)).to eq(<<~RUBY.strip)
       render(Outer.new) {
-        5.times.map {
-          Rux.tag("div") {
-            Rux.create_buffer.tap { |_rux_buf_,|
-              _rux_buf_ << "So "
-              _rux_buf_ << @cool
-            }.to_s
+        Rux.create_buffer.tap { |_rux_buf_,|
+          _rux_buf_ << " "
+          _rux_buf_ << 5.times.map {
+            Rux.tag("div") {
+              Rux.create_buffer.tap { |_rux_buf_,|
+                _rux_buf_ << "So "
+                _rux_buf_ << @cool
+              }.to_s
+            }
           }
-        }
+          _rux_buf_ << " "
+        }.to_s
       }
     RUBY
   end
@@ -205,5 +213,17 @@ describe Rux::Parser do
         "closing tag 'Goodbye' on line 1 did not match opening tag 'Hello' "\
         'on line 1')
     )
+  end
+
+  it 'emits handles spaces between adjacent ruby code snippets' do
+    expect(compile("<Hello>{first} {second}</Hello>")).to eq(<<~RUBY.strip)
+      render(Hello.new) {
+        Rux.create_buffer.tap { |_rux_buf_,|
+          _rux_buf_ << first
+          _rux_buf_ << " "
+          _rux_buf_ << second
+        }.to_s
+      }
+    RUBY
   end
 end
