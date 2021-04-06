@@ -1,5 +1,8 @@
 #! /usr/bin/env ruby
 
+$:.push(File.expand_path('./lib'))
+
+require 'pathname'
 require 'optparse'
 require 'rux'
 
@@ -22,20 +25,12 @@ class RuxCLI
     parser = OptionParser.new do |opts|
       opts.banner = "Usage: ruxc path [options]"
 
-      opts.on('-fFILE', '--file=FILE', 'Write output to this file instead of stdout.') do |out_file|
-        options[:out_file] = out_file
-      end
-
-      desc = <<~DESC
-        Recursively compile all files in path. If this option is passed, path
-        must be a directory and --file is ignored (default: false).
+      oneline(<<~DESC).tap do |desc|
+        Prettify generated Ruby code (default: #{options[:pretty]}).
       DESC
-      opts.on('-r', '--recursive', desc) do |recursive|
-        options[:recursive] = recursive
-      end
-
-      opts.on('-p', '--[no-]pretty', 'Prettify generated Ruby code (default: true).') do |pretty|
-        options[:pretty] = pretty
+        opts.on('-p', '--[no-]pretty', desc) do |pretty|
+          options[:pretty] = pretty
+        end
       end
 
       opts.on('-h', '--help', 'Prints this help info') do
@@ -48,43 +43,36 @@ class RuxCLI
     new(options)
   end
 
+  def self.oneline(str)
+    str.split("\n").join(' ')
+  end
+
   def initialize(options)
     @options = options
   end
 
   def validate
-    if directory?
-      if !recursive?
-        puts 'Please specify the --recursive option for directories.'
-        exit 2
-      end
-    elsif file?
-      if recursive?
-        puts 'The --recursive option may not be specified for files.'
-        exit 3
-      end
-    else
+    unless File.exist?(in_path)
       puts "Could not find file at '#{in_path}'"
-      exit 4
+      exit 1
     end
   end
 
   def each_file(&block)
-    if directory?
-      Dir.glob(File.join(in_path, '**', '*.rux')).each do |file|
-        yield file, "#{file.chomp(File.extname(file))}.ruxc"
-      end
+    files = if in_path.directory?
+      in_path.glob(File.join('**', '*.rux'))
     else
-      yield in_path, @options[:out_file]
+      [in_path]
+    end
+
+    files.each do |file|
+      ruby_file = file.sub_ext('.rb')
+      yield file, ruby_file
     end
   end
 
-  def recursive?
-    @options[:recursive]
-  end
-
   def in_path
-    @options[:in_path]
+    @in_path ||= Pathname(@options[:in_path]).expand_path
   end
 
   def pretty?
@@ -92,10 +80,6 @@ class RuxCLI
   end
 
   private
-
-  def file?
-    File.file?(in_path)
-  end
 
   def directory?
     File.directory?(in_path)
@@ -105,13 +89,8 @@ end
 cli = RuxCLI.parse(ARGV)
 cli.validate
 
-cli.each_file do |in_file, out_file|
+cli.each_file do |in_file, out_file, rbi_file|
   rux_file = Rux::File.new(in_file)
-
-  if out_file
-    rux_file.write(out_file, pretty: cli.pretty?)
-    puts "Wrote #{out_file}"
-  else
-    puts rux_file.to_ruby(pretty: cli.pretty?)
-  end
+  rux_file.write(out_file, pretty: cli.pretty?)
+  puts "Wrote #{out_file}"
 end
