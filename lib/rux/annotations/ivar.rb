@@ -10,6 +10,14 @@ module Rux
       def to_rbi(level)
         indent("#{sig}\n#{kind} #{sym(ivar.bare_name)}", level)
       end
+
+      def private?
+        ivar.private?
+      end
+
+      def public?
+        ivar.public?
+      end
     end
 
     class AttrReader < Attr
@@ -18,7 +26,11 @@ module Rux
       end
 
       def sig
-        "sig { returns(#{ivar.type.sig}) }"
+        "sig { returns(#{ivar.sig}) }"
+      end
+
+      def method_sym
+        sym(ivar.bare_name)
       end
     end
 
@@ -28,7 +40,11 @@ module Rux
       end
 
       def sig
-        "sig { params(#{sym_join(ivar.bare_name, ivar.type.sig)}).void }"
+        "sig { params(#{sym_join(ivar.bare_name, ivar.sig)}).void }"
+      end
+
+      def method_sym
+        sym("#{ivar.bare_name}=")
       end
     end
 
@@ -45,12 +61,16 @@ module Rux
         @bare_name ||= name[1..-1]
       end
 
-      class symbol
+      def symbol
         sym(bare_name)
       end
 
+      def sig
+        "T.nilable(#{type.sig})"
+      end
+
       def to_rbi(level)
-        indent("#{name} = T.let(nil, T.nilable(#{type.sig}))", level)
+        indent("#{name} = T.let(nil, #{sig})", level)
       end
 
       def attr?

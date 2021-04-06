@@ -88,7 +88,7 @@ class RuxCLI
 
       rbi_file = if annotations_enabled?
         relative_file = ruby_file.relative_path_from(Dir.getwd)
-        annotations_path.join(relative_file)
+        annotations_path.join(relative_file).sub_ext('.rbi')
       end
 
       yield file, ruby_file, rbi_file

@@ -15,7 +15,7 @@ module Rux
       return ruby_code unless pretty
 
       ::Unparser.unparse(
-        ::Parser::CurrentRuby.parse(ruby_code)
+        *::Parser::CurrentRuby.parse_with_comments(ruby_code)
       )
     end
 

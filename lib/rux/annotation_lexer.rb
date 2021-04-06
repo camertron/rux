@@ -127,9 +127,25 @@ module Rux
         end
       end
 
-      IVar.new(name, type, modifiers.map { |m| text_of(m) }).tap do |ivar|
+      ivar = IVar.new(name, type, modifiers.map { |m| text_of(m) })
+
+      if ivar.attr?
         block.call([:tSYMBOL, [ivar.symbol, pos_of(ivar_token)]])
       end
+
+      ivar.attrs.each do |attr|
+        if attr.private?
+          fabricate_and_yield(block, [
+            [:tNL, "\n"],
+            [:tIDENTIFIER, 'private'],
+            [:tLPAREN2, '('],
+            [:tSYMBOL, attr.method_sym],
+            [:tRPAREN, ')']
+          ])
+        end
+      end
+
+      ivar
     end
 
     def handle_class(block)
@@ -320,6 +336,12 @@ module Rux
       tokens.each { |t| block.call(t) }
     end
 
+    def fabricate_and_yield(block, tokens)
+      tokens.each do |(type, text)|
+        block.call([type, [text, make_range(0, 0)]])
+      end
+    end
+
     def const_token?(token)
       case type_of(token)
         when :tCONSTANT, :tCOLON2, :tCOLON3
@@ -334,11 +356,22 @@ module Rux
 
       if !types.include?(type_of(current))
         raise UnexpectedTokenError,
-          "expected [#{types.map(&:to_s).join(', ')}], got '#{type_of(current)}'"
+          "expected #{to_list(types.map(&:to_s))}, got #{type_of(current)} "\
+          "on line #{pos_of(current).line}"
       end
 
       block.call(current) if block
       @current = get_next
+    end
+
+    def to_list(items)
+      if items.size == 1
+        items.first
+      elsif items.size == 2
+        items.join(' or ')
+      else
+        items[0..-2].join(', ') << ' or ' << items[-1]
+      end
     end
 
     def type_of(token)
@@ -355,6 +388,10 @@ module Rux
 
     def get_next
       @lexer.advance
+    end
+
+    def make_range(start, stop)
+      ::Parser::Source::Range.new(@lexer.source_buffer, start, stop)
     end
   end
 end

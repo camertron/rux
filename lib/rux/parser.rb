@@ -65,18 +65,34 @@ module Rux
         end
       end
 
+      if type_sigil = @lexer.context[:annotations].type_sigil
+        children.prepend(AST::RubyNode.new("# typed: #{type_sigil}\n\n"))
+      end
+
       AST::ListNode.new(children)
     end
 
     private
 
     def ruby
-      result = [].tap do |code|
+      result = ''.tap do |code|
+        last_token = nil
+
         loop do
           type = type_of(current)
+          break if type.nil? || RuxLexer.state_table.include?(type)
 
-          if type.nil? || RuxLexer.state_table.include?(type_of(current))
-            break
+          if last_token
+            # Extract white space from between the last two ruby tokens and emit it.
+            # The between text may or may not be entirely whitespace. Tokens that are
+            # removed during the lexing process (eg. annotations, etc) aren't yielded
+            # to this parser, but are obviously still present in the original rux
+            # source code. Slices of the input text can therefore contain any amount
+            # of "throwaway" text. In such cases, the between text will also contain
+            # trailing whitespace that is important to capture, so we extract it off
+            # the end and emit it.
+            between = @lexer.source_buffer.source[pos_of(last_token).end_pos...pos_of(current).begin_pos]
+            code << (between[/\s+\z/] || '')
           end
 
           case type
@@ -86,22 +102,16 @@ module Rux
               # special case since lexer seems to not emit newlines that
               # follow a "do"
               code << "do "
-            when :tCOLON2
-              # special case to avoid emitting "Parent :: Child," which unparser
-              # turns into "Parent(::Child)"
-              code.last.rstrip!
-              code << '::'
             else
-              code << "#{text_of(current)} "
+              code << "#{text_of(current)}"
           end
 
+          last_token = current
           consume(type_of(current))
         end
       end
 
-      # Should be ok to join everything here. Ruby is quite permissive,
-      # plus hopefully we're prettifying everything anyway.
-      result.empty? ? nil : AST::RubyNode.new(result.join)
+      result.empty? ? nil : AST::RubyNode.new(result)
     end
 
     def tag
