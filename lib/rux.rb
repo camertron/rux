@@ -7,7 +7,7 @@ require 'stringio'
 begin
   old_stdout = $stdout
   $stdout = StringIO.new
-  require 'racc'
+  require 'racc/parser'
 ensure
   $stdout = old_stdout
 end
