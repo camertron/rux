@@ -65,10 +65,6 @@ module Rux
         end
       end
 
-      if type_sigil = @lexer.context[:annotations].type_sigil
-        children.prepend(AST::RubyNode.new("# typed: #{type_sigil}\n\n"))
-      end
-
       AST::ListNode.new(children)
     end
 

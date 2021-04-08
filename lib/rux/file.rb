@@ -19,10 +19,6 @@ module Rux
       )
     end
 
-    def to_rbi
-      parse_result.context[:annotations].to_rbi
-    end
-
     def write(outfile = nil, **kwargs)
       ::File.write(outfile || default_outfile, to_ruby(**kwargs))
     end

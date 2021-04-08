@@ -17,8 +17,6 @@ require 'parser/current'
 require 'unparser'
 
 module Rux
-  autoload :Annotations,       'rux/annotations'
-  autoload :AnnotationLexer,   'rux/annotation_lexer'
   autoload :AST,               'rux/ast'
   autoload :BaseLexer,         'rux/base_lexer'
   autoload :Buffer,            'rux/buffer'
@@ -60,10 +58,6 @@ module Rux
 
     def default_buffer
       @default_buffer ||= Buffer
-    end
-
-    def default_annotations_path
-      @default_annotations_path ||= './sorbet/rbi'
     end
 
     def tag(tag_name, attributes = {}, &block)

@@ -6,7 +6,7 @@ module Rux
 
     def initialize(source_buffer, init_pos, context)
       @source_buffer = source_buffer
-      @lexer = AnnotationLexer.new(source_buffer, init_pos, context)
+      @lexer = BaseLexer.new(source_buffer, init_pos, context)
       @generator = to_enum(:each_token)
       @rux_token_queue = []
       @context = context
