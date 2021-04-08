@@ -207,9 +207,9 @@ module Rux
       if is?(:tRUX_LITERAL_RUBY_CODE_START)
         literal_ruby_code
       else
-        lit = text_of(current)
+        lit = squeeze_lit(text_of(current))
         consume(:tRUX_LITERAL)
-        AST::TextNode.new(squeeze_lit(lit)) unless lit.strip.empty?
+        AST::TextNode.new(lit) unless lit.empty?
       end
     end
 
