@@ -15,17 +15,15 @@ module Rux
     end
 
 
-    def initialize(source_buffer, init_pos)
+    def initialize(source_buffer, init_pos, context)
+      @context = context
+
       super(
         StateMachine.new(
           self.class.state_table, source_buffer, init_pos
         )
       )
     end
-
-    # def next_lexer(pos)
-    #   RubyLexer.new(@source_buffer, pos)
-    # end
 
     private
 
@@ -52,8 +50,10 @@ module Rux
                 from_const = true if from
                 yield [:tRUX_IMPORT_CONST, [text, pos]]
             end
-          when :tRUX_IMPORT_OPEN_CURLY, :tRUX_IMPORT_CLOSE_CURLY
+          when :tRUX_IMPORT_COMMA, :tRUX_IMPORT_OPEN_CURLY, :tRUX_IMPORT_CLOSE_CURLY
             yield [state, [text, pos]]
+          when :tRUX_IMPORT_SPACES
+            break if text.include?("\n")
         end
       end
     end

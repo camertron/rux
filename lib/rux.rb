@@ -25,6 +25,7 @@ module Rux
   autoload :DefaultVisitor,    'rux/default_visitor'
   autoload :File,              'rux/file'
   autoload :ImportLexer,       'rux/import_lexer'
+  autoload :Imports,           'rux/imports'
   autoload :Lex,               'rux/lex'
   autoload :Lexer,             'rux/lexer'
   autoload :Parser,            'rux/parser'
@@ -33,6 +34,7 @@ module Rux
   autoload :StateBasedLexer,   'rux/state_based_lexer'
   autoload :StateMachine,      'rux/state_machine'
   autoload :StateTable,        'rux/state_table'
+  autoload :TokenMatcher,      'rux/token_matcher'
   autoload :Utils,             'rux/utils'
   autoload :Visitor,           'rux/visitor'
 

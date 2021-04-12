@@ -48,8 +48,6 @@ module Rux
         case type
           when :tRESET
             @p = pos.begin_pos
-          when :tSKIP
-            next
           else
             yield token
 

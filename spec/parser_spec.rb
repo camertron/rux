@@ -3,8 +3,8 @@ require 'parser'
 require 'unparser'
 
 describe Rux::Parser do
-  def compile(rux_code)
-    Rux.to_ruby(rux_code)
+  def compile(rux_code, pretty: true)
+    Rux.to_ruby(rux_code, pretty: pretty)
   end
 
   it 'handles a single self-closing tag' do

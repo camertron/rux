@@ -19,22 +19,25 @@ module Rux
         buffer = ::Parser::Source::Buffer.new(path).read
         lexer = ::Rux::Lexer.new(buffer)
         parser = new(lexer)
-        ParseResult.new(parser.parse, lexer.context)
+        ParseResult.new(parser.parse, lexer.context.merge(imports: parser.imports))
       end
 
       def parse(str)
         buffer = ::Parser::Source::Buffer.new('(source)', source: str)
         lexer = ::Rux::Lexer.new(buffer)
         parser = new(lexer)
-        ParseResult.new(parser.parse, lexer.context)
+        ParseResult.new(parser.parse, lexer.context.merge(imports: parser.imports))
       end
     end
+
+    attr_reader :imports
 
     # TODO: handle comments
     def initialize(lexer)
       @lexer = lexer
       @stack = []
       @current = get_next
+      @imports = Imports::ImportList.new
     end
 
     def parse
@@ -54,14 +57,17 @@ module Rux
 
         break if curlies == 0
 
-        if rb = ruby
+        if type == :tRUX_IMPORT
+          @imports.add(import)
+        elsif rb = ruby
           children << rb
-        elsif type_of(current) == :tRUX_TAG_OPEN_START
+        elsif type == :tRUX_TAG_OPEN_START
           children << tag
         else
+          pos = pos_of(current)
           raise UnexpectedTokenError,
             'expected ruby code or the start of a rux tag but found '\
-              "#{type_of(current)} instead"
+              "#{type_of(current)} instead on line #{pos.line}"
         end
       end
 
@@ -70,13 +76,61 @@ module Rux
 
     private
 
+    def import
+      consume(:tRUX_IMPORT)
+
+      if type_of(current) == :tRUX_IMPORT_OPEN_CURLY
+        import_from
+      else
+        import_bare
+      end
+    end
+
+    def import_from
+      consume(:tRUX_IMPORT_OPEN_CURLY)
+      imported_consts = import_const_list
+      consume(:tRUX_IMPORT_CLOSE_CURLY)
+      consume(:tRUX_IMPORT_FROM)
+      from_const = import_const
+
+      Imports::Import.new(imported_consts, from_const)
+    end
+
+    def import_bare
+      Imports::Import.new(import_const_list)
+    end
+
+    def import_const_list
+      [].tap do |consts|
+        loop do
+          consts << import_const
+          break unless maybe_consume(:tRUX_IMPORT_COMMA)
+        end
+      end
+    end
+
+    def import_const
+      const_str = text_of(current)
+      consume(:tRUX_IMPORT_CONST)
+
+      if maybe_consume(:tRUX_IMPORT_AS)
+        as_const_str = text_of(current)
+        consume(:tRUX_IMPORT_CONST)
+      end
+
+      Imports::ImportedConst.parse(const_str, as_const_str)
+    end
+
     def ruby
       result = ''.tap do |code|
         last_token = nil
 
         loop do
           type = type_of(current)
-          break if type.nil? || RuxLexer.state_table.include?(type)
+
+          break if type.nil? ||
+            type.to_s.start_with?(RuxLexer.state_table.state_prefix) ||
+            type.to_s.start_with?(ImportLexer.state_table.state_prefix)
 
           if last_token
             # Extract white space from between the last two ruby tokens and emit it.
@@ -99,11 +153,12 @@ module Rux
               # follow a "do"
               code << "do "
             else
-              code << "#{text_of(current)}"
+              pos = pos_of(current)
+              code << @lexer.source_buffer.source[pos.begin_pos...pos.end_pos]
           end
 
           last_token = current
-          consume(type_of(current))
+          consume(type)
         end
       end
 

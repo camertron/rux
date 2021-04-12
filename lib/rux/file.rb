@@ -10,13 +10,20 @@ module Rux
       @visitor = visitor
     end
 
+    # def to_ruby(pretty: true)
+    #   ruby_code = visitor.visit(parse_result.ast)
+    #   return ruby_code unless pretty
+
+    #   ::Unparser.unparse(
+    #     *::Parser::CurrentRuby.parse_with_comments(ruby_code)
+    #   )
+    # end
+
     def to_ruby(pretty: true)
       ruby_code = visitor.visit(parse_result.ast)
-      return ruby_code unless pretty
-
-      ::Unparser.unparse(
-        *::Parser::CurrentRuby.parse_with_comments(ruby_code)
-      )
+      ast, comments = ::Parser::CurrentRuby.parse_with_comments(ruby_code)
+      ast = Imports::ImportRewriter.new(parse_result.context[:imports]).process(ast)
+      ::Unparser.unparse(ast, comments)
     end
 
     def write(outfile = nil, **kwargs)
