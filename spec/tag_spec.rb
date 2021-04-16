@@ -1,12 +1,6 @@
 require 'spec_helper'
-require 'parser'
-require 'unparser'
 
 describe Rux::Parser do
-  def compile(rux_code, pretty: true)
-    Rux.to_ruby(rux_code, pretty: pretty)
-  end
-
   it 'handles a single self-closing tag' do
     expect(compile("<Hello/>")).to eq("render(Hello.new)")
   end
@@ -215,7 +209,7 @@ describe Rux::Parser do
     )
   end
 
-  it 'emits handles spaces between adjacent ruby code snippets' do
+  it 'emits spaces between adjacent ruby code snippets' do
     expect(compile("<Hello>{first} {second}</Hello>")).to eq(<<~RUBY.strip)
       render(Hello.new) {
         Rux.create_buffer.tap { |_rux_buf_,|

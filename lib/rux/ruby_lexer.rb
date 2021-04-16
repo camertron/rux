@@ -35,7 +35,7 @@ module Rux
       curlies = 1
 
       until @matcher.empty?
-        if @matcher.at_rux? || @matcher.at_import?
+        while @matcher.at_rux? || @matcher.at_import?
           @eof = true
           _, (_, pos) = @matcher.current
 
@@ -44,7 +44,9 @@ module Rux
           while @eof
             yield [nil, ['$eof', pos]]
           end
-        elsif @matcher.at_inheritance?
+        end
+
+        if @matcher.at_inheritance?
           2.times { yield @matcher.dequeue }
         end
 

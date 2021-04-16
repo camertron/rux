@@ -39,10 +39,12 @@ module Rux
     end
 
     def parse_pattern(pattern)
-      if pattern == "(space)"
+      if pattern == '(space)'
         Lex::CharsetPattern.new([' ', "\r", "\n"])
-      elsif pattern == "(default)"
+      elsif pattern == '(default)'
         Lex::DefaultPattern.new
+      elsif pattern == '(eof)'
+        Lex::EofPattern.new
       elsif pattern.start_with?('[^')
         Lex::NegatedCharsetPattern.parse(pattern[2..-2])
       else

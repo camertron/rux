@@ -33,6 +33,8 @@ module Rux
       from_const = false
 
       until from && from_const
+        break if @state_machine.eof?
+
         token = @state_machine.advance
         state, (text, pos) = token
 
