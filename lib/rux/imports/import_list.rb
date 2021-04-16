@@ -17,7 +17,7 @@ module Rux
 
         [
           *(import.from_const&.const || []),
-          *resolved.const
+          *resolved_const.const
         ]
       end
 

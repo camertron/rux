@@ -10,19 +10,14 @@ module Rux
       @visitor = visitor
     end
 
-    # def to_ruby(pretty: true)
-    #   ruby_code = visitor.visit(parse_result.ast)
-    #   return ruby_code unless pretty
-
-    #   ::Unparser.unparse(
-    #     *::Parser::CurrentRuby.parse_with_comments(ruby_code)
-    #   )
-    # end
-
-    def to_ruby(pretty: true)
+    def to_ruby(pretty: true, raise_on_missing_imports: true)
       ruby_code = visitor.visit(parse_result.ast)
       ast, comments = ::Parser::CurrentRuby.parse_with_comments(ruby_code)
-      ast = Imports::ImportRewriter.new(parse_result.context[:imports]).process(ast)
+      rewriter = Imports::ImportRewriter.new(
+        parse_result.context[:imports],
+        raise_on_missing_imports: raise_on_missing_imports
+      )
+      ast = rewriter.process(ast)
       ::Unparser.unparse(ast, comments)
     end
 

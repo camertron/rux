@@ -6,6 +6,13 @@ module Rux
     autoload :ImportRewriter, 'rux/imports/import_rewriter'
     autoload :Scope,          'rux/imports/scope'
 
-    class MissingConstantError < StandardError; end
+    class MissingConstantError < StandardError
+      attr_reader :missing_const
+
+      def initialize(message, missing_const)
+        super(message)
+        @missing_const = missing_const
+      end
+    end
   end
 end

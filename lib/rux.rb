@@ -41,13 +41,16 @@ module Rux
   class << self
     attr_accessor :tag_builder, :buffer
 
-    def to_ruby(str, visitor: default_visitor, pretty: true)
-      ruby_code = visitor.visit(Parser.parse(str).ast)
-      return ruby_code unless pretty
-
-      ::Unparser.unparse(
-        ::Parser::CurrentRuby.parse(ruby_code)
+    def to_ruby(str, visitor: default_visitor, pretty: true, raise_on_missing_imports: true)
+      parse_result = Parser.parse(str)
+      ruby_code = visitor.visit(parse_result.ast)
+      ast, comments = ::Parser::CurrentRuby.parse_with_comments(ruby_code)
+      rewriter = Imports::ImportRewriter.new(
+        parse_result.context[:imports],
+        raise_on_missing_imports: raise_on_missing_imports
       )
+      ast = rewriter.process(ast)
+      ::Unparser.unparse(ast, comments)
     end
 
     def default_visitor

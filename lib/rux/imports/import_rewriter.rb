@@ -35,8 +35,11 @@ module Rux
         else
           if raise_on_missing_imports?
             missing = const.map(&:to_s).join('::')
-            raise MissingConstantError, "Cannot find constant '#{missing}' " \
-              "on line #{node.loc.line}, do you need to import it?"
+            raise MissingConstantError.new(
+              "Cannot find constant '#{missing}' on line #{node.loc.line}, "\
+                "do you need to import it?",
+              const
+            )
           end
 
           node
