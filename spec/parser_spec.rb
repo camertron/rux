@@ -152,6 +152,33 @@ describe Rux::Parser do
     RUBY
   end
 
+  it 'handles HTML tags inside ruby code' do
+    rux_code = <<~RUX
+      <div>
+        {5.times.map do
+          <p>What a {@thing}</p>
+        end}
+      </div>
+    RUX
+
+    expect(compile(rux_code)).to eq(<<~RUBY.strip)
+      Rux.tag("div") {
+        Rux.create_buffer.tap { |_rux_buf_,|
+          _rux_buf_ << " "
+          _rux_buf_ << 5.times.map {
+            Rux.tag("p") {
+              Rux.create_buffer.tap { |_rux_buf_,|
+                _rux_buf_ << "What a "
+                _rux_buf_ << @thing
+              }.to_s
+            }
+          }
+          _rux_buf_ << " "
+        }.to_s
+      }
+    RUBY
+  end
+
   it 'handles regular HTML tags' do
     expect(compile('<div>foo</div>')).to eq(<<~RUBY.strip)
       Rux.tag("div") {
