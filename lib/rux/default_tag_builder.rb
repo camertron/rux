@@ -1,7 +1,8 @@
 module Rux
   class DefaultTagBuilder
     def call(tag_name, attributes = {})
-      "<#{tag_name} #{serialize_attrs(attributes)}>" <<
+      attr_str = attributes.empty? ? '' : " #{serialize_attrs(attributes)}"
+      "<#{tag_name}#{attr_str}>" <<
         (block_given? ? Array(yield) : []).join <<
         "</#{tag_name}>"
     end
