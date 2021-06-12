@@ -29,4 +29,12 @@ describe Rux do
 
     expect(result).to eq("<div> <p>Welcome!</p><p>Welcome!</p><p>Welcome!</p> </div>")
   end
+
+  it 'correctly handles keyword arguments (ruby 3)' do
+    result = render(<<~RUBY)
+      <ArgsComponent a="a" b="b" />
+    RUBY
+
+    expect(result).to eq("<p>a and b</p>")
+  end
 end

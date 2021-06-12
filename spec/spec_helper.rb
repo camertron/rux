@@ -8,7 +8,7 @@ module ViewComponent
     attr_accessor :content
 
     def render(component, &block)
-      component.content = block.call
+      component.content = block.call if block
       component.call
     end
   end
@@ -17,6 +17,19 @@ end
 class TestComponent < ViewComponent::Base
   def call
     content
+  end
+end
+
+class ArgsComponent < ViewComponent::Base
+  attr_reader :a, :b
+
+  def initialize(a:, b:)
+    @a = a
+    @b = b
+  end
+
+  def call
+    "<p>#{a} and #{b}</p>"
   end
 end
 
