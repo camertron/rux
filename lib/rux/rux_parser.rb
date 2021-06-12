@@ -1,7 +1,7 @@
 require 'parser'
 
 module Rux
-  class Parser
+  class RuxParser
     class UnexpectedTokenError < StandardError; end
     class TagMismatchError < StandardError; end
 
@@ -12,8 +12,8 @@ module Rux
         new(lexer).parse
       end
 
-      def parse(str)
-        buffer = ::Parser::Source::Buffer.new('(source)', source: str)
+      def parse(buffer)
+        # buffer = ::Parser::Source::Buffer.new('(source)', source: str)
         lexer = ::Rux::Lexer.new(buffer)
         new(lexer).parse
       end
@@ -59,41 +59,32 @@ module Rux
     private
 
     def ruby
-      ruby_start = pos_of(current).begin_pos
+      tokens = [].tap do |ruby_tokens|
+        loop do
+          type = type_of(current)
 
-      loop do
-        type = type_of(current)
+          if type.nil? || RuxLexer.state_table.include?(type_of(current))
+            break
+          end
 
-        if type.nil? || RuxLexer.state_table.include?(type_of(current))
-          break
+          ruby_tokens << current
+          consume(type_of(current))
         end
-
-        consume(type_of(current))
       end
 
-      unless type_of(current)
-        return AST::RubyNode.new(
-          @lexer.source_buffer.source[ruby_start..-1]
-        )
-      end
-
-      if pos_of(current).begin_pos != ruby_start
-        AST::RubyNode.new(
-          @lexer.source_buffer.source[ruby_start...(pos_of(current).end_pos - 1)]
-        )
-      end
+      AST::RubyNode.new(tokens) unless tokens.empty?
     end
 
     def tag
+      tag_pos = pos_of(current)
       consume(:tRUX_TAG_OPEN_START)
       tag_name = text_of(current)
-      tag_pos = pos_of(current)
       consume(:tRUX_TAG_OPEN, :tRUX_TAG_SELF_CLOSING)
       maybe_consume(:tRUX_ATTRIBUTE_SPACES)
       attrs = attributes
       maybe_consume(:tRUX_ATTRIBUTE_SPACES)
       maybe_consume(:tRUX_TAG_OPEN_END)
-      tag_node = AST::TagNode.new(tag_name, attrs)
+      tag_node = AST::TagNode.new(tag_name, attrs, tag_pos)
 
       if is?(:tRUX_TAG_SELF_CLOSING_END)
         consume(:tRUX_TAG_SELF_CLOSING_END)
@@ -132,11 +123,9 @@ module Rux
     end
 
     def attributes
-      {}.tap do |attrs|
+      [].tap do |attrs|
         while is?(:tRUX_ATTRIBUTE_NAME)
-          key, value = attribute
-          attrs[key] = value
-
+          attrs << attribute
           maybe_consume(:tRUX_ATTRIBUTE_SPACES)
         end
       end
@@ -145,6 +134,7 @@ module Rux
     def attribute
       maybe_consume(:tRUX_ATTRIBUTE_SPACES)
       attr_name = text_of(current)
+      attr_pos = pos_of(current)
       consume(:tRUX_ATTRIBUTE_NAME)
       maybe_consume(:tRUX_ATTRIBUTE_EQUALS_SPACES)
 
@@ -153,17 +143,17 @@ module Rux
         attribute_value
       else
         # if no equals sign, assume boolean attribute
-        AST::StringNode.new("\"true\"")
+        AST::StringNode.new("\"true\"", nil)
       end
 
-      [attr_name, attr_value]
+      AST::AttrNode.new(attr_name, attr_value, attr_pos)
     end
 
     def attribute_value
       if is?(:tRUX_ATTRIBUTE_VALUE_RUBY_CODE_START)
         attr_ruby_code
       else
-        AST::StringNode.new(text_of(current)).tap do
+        AST::StringNode.new(text_of(current), pos_of(current)).tap do
           consume(:tRUX_ATTRIBUTE_VALUE)
         end
       end
@@ -182,8 +172,9 @@ module Rux
         literal_ruby_code
       else
         lit = squeeze_lit(text_of(current))
+        pos = pos_of(current)
         consume(:tRUX_LITERAL)
-        AST::TextNode.new(lit) unless lit.empty?
+        AST::TextNode.new(lit, pos) unless lit.empty?
       end
     end
 

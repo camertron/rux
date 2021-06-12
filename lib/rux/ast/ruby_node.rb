@@ -1,14 +1,14 @@
 module Rux
   module AST
     class RubyNode
-      attr_reader :code
+      attr_reader :tokens
 
-      def initialize(code)
-        @code = code
+      def initialize(tokens)
+        @tokens = tokens
       end
 
-      def accept(visitor)
-        visitor.visit_ruby(self)
+      def accept(visitor, &block)
+        visitor.visit_ruby(self, &block)
       end
     end
   end

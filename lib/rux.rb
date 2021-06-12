@@ -25,22 +25,51 @@ module Rux
   autoload :File,              'rux/file'
   autoload :Lex,               'rux/lex'
   autoload :Lexer,             'rux/lexer'
-  autoload :Parser,            'rux/parser'
+  autoload :LexerInterface,    'rux/lexer_interface'
   autoload :RubyLexer,         'rux/ruby_lexer'
   autoload :RuxLexer,          'rux/rux_lexer'
+  autoload :RuxParser,         'rux/rux_parser'
+  autoload :Emitter,           'rux/emitter'
   autoload :Utils,             'rux/utils'
   autoload :Visitor,           'rux/visitor'
+  autoload :VisitContext,      'rux/visit_context'
 
   class << self
     attr_accessor :tag_builder, :buffer
 
     def to_ruby(str, visitor: default_visitor, pretty: true)
-      ruby_code = visitor.visit(Parser.parse(str))
-      return ruby_code unless pretty
+      buffer = ::Parser::Source::Buffer.new('(source)', source: str)
+      rux_ast = RuxParser.parse(buffer)
+      emitter = Emitter.new(rux_ast, buffer, visitor)
+      parser = ::Parser::CurrentRuby.new
+      parser.diagnostics.all_errors_are_fatal = true
+      parser.instance_variable_set(:@lexer, emitter)
+      emitter.diagnostics = parser.diagnostics
+      emitter.static_env  = parser.static_env
+      emitter.context     = parser.context
+      ast = parser.parse(buffer)
+      puts Unparser.unparse(ast)
 
-      ::Unparser.unparse(
-        ::Parser::CurrentRuby.parse(ruby_code)
-      )
+      # rux_ast = RuxParser.parse(str)
+      # context = VisitContext.new(-> (token) { puts "#{token[0]}: #{token[1][0]}" })
+      # visitor.visit(ast, context)
+
+      # buffer = ::Parser::Source::Buffer.new('(source)', source: str)
+      # lexer = ::Rux::Lexer.new(buffer)
+      # parser = ::Parser::CurrentRuby.new
+      # parser.instance_variable_set(:@lexer, lexer)
+      # lexer.diagnostics = parser.diagnostics
+      # lexer.static_env  = parser.static_env
+      # lexer.context     = parser.context
+      # ast = parser.parse(buffer)
+      # ::Unparser.unparse(ast)
+
+      # ruby_code = visitor.visit(Parser.parse(str))
+      # return ruby_code unless pretty
+
+      # ::Unparser.unparse(
+      #   ::Parser::CurrentRuby.parse(ruby_code)
+      # )
     end
 
     def default_visitor

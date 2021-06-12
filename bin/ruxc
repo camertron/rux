@@ -6,6 +6,9 @@ require 'pathname'
 require 'optparse'
 require 'rux'
 
+# @TODO: remove me
+require 'pry-byebug'
+
 class RuxCLI
   def self.parse(argv)
     if argv.empty?

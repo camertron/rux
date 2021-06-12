@@ -7,8 +7,8 @@ module Rux
         @children = children
       end
 
-      def accept(visitor)
-        visitor.visit_list(self)
+      def accept(visitor, &block)
+        visitor.visit_list(self, &block)
       end
     end
   end

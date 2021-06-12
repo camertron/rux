@@ -1,5 +1,6 @@
 module Rux
   module AST
+    autoload :AttrNode,   'rux/ast/attr_node'
     autoload :ListNode,   'rux/ast/list_node'
     autoload :RubyNode,   'rux/ast/ruby_node'
     autoload :StringNode, 'rux/ast/string_node'
