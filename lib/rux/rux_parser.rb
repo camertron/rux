@@ -6,11 +6,11 @@ module Rux
     class TagMismatchError < StandardError; end
 
     class << self
-      def parse_file(path)
-        buffer = ::Parser::Source::Buffer.new(path).read
-        lexer = ::Rux::Lexer.new(buffer)
-        new(lexer).parse
-      end
+      # def parse_file(path)
+      #   buffer = ::Parser::Source::Buffer.new(path).read
+      #   lexer = ::Rux::Lexer.new(buffer)
+      #   new(lexer).parse
+      # end
 
       def parse(buffer)
         # buffer = ::Parser::Source::Buffer.new('(source)', source: str)
