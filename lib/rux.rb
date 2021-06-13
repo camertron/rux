@@ -71,3 +71,15 @@ module Rux
   self.tag_builder = self.default_tag_builder
   self.buffer = self.default_buffer
 end
+
+# unfortunately these have to be set globally :(
+Parser::Builders::Default.tap do |builder|
+  builder.emit_lambda              = true
+  builder.emit_procarg0            = true
+  builder.emit_encoding            = true
+  builder.emit_index               = true
+  builder.emit_arg_inside_procarg0 = true
+  builder.emit_forward_arg         = true
+  builder.emit_kwargs              = true
+  builder.emit_match_pattern       = true
+end
