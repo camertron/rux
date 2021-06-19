@@ -23,65 +23,65 @@ describe Rux::Parser do
 
   it 'handles single-quoted rux attributes' do
     expect(compile_no_imports("<Hello foo='bar' />")).to eq(
-      'render(Hello.new({ foo: "bar" }))'
+      'render(Hello.new(foo: "bar"))'
     )
 
     expect(compile_no_imports("<Hello foo='bar'></Hello>")).to eq(
-      'render(Hello.new({ foo: "bar" }))'
+      'render(Hello.new(foo: "bar"))'
     )
   end
 
   it 'handles double-quoted rux attributes' do
     expect(compile_no_imports('<Hello foo="bar" />')).to eq(
-      'render(Hello.new({ foo: "bar" }))'
+      'render(Hello.new(foo: "bar"))'
     )
 
     expect(compile_no_imports('<Hello foo="bar"></Hello>')).to eq(
-      'render(Hello.new({ foo: "bar" }))'
+      'render(Hello.new(foo: "bar"))'
     )
   end
 
   it 'handles non-uniform spacing between attributes' do
     expect(compile_no_imports('<Hello  foo="bar"    baz= "boo" bix  ="bit" />')).to eq(
-      'render(Hello.new({ foo: "bar", baz: "boo", bix: "bit" }))'
+      'render(Hello.new(foo: "bar", baz: "boo", bix: "bit"))'
     )
   end
 
   it 'handles boolean attributes' do
     expect(compile_no_imports('<Hello disabled />')).to eq(
-      'render(Hello.new({ disabled: "true" }))'
+      'render(Hello.new(disabled: "true"))'
     )
 
     expect(compile_no_imports('<Hello disabled/>')).to eq(
-      'render(Hello.new({ disabled: "true" }))'
+      'render(Hello.new(disabled: "true"))'
     )
 
     expect(compile_no_imports('<Hello disabled></Hello>')).to eq(
-      'render(Hello.new({ disabled: "true" }))'
+      'render(Hello.new(disabled: "true"))'
     )
   end
 
   it 'converts dashes to underscores in attribute keys' do
     expect(compile_no_imports('<Hello foo-bar="baz" />')).to eq(
-      'render(Hello.new({ foo_bar: "baz" }))'
+      'render(Hello.new(foo_bar: "baz"))'
     )
   end
 
   it 'handles simple ruby statements in attributes' do
     expect(compile_no_imports('<Hello foo={true} />')).to eq(
-      'render(Hello.new({ foo: true }))'
+      'render(Hello.new(foo: true))'
     )
   end
 
   it 'handles ruby hashes in attributes' do
     expect(compile_no_imports('<Hello foo={{ foo: "bar", baz: "boo" }} />')).to eq(
-      'render(Hello.new({ foo: { foo: "bar", baz: "boo" } }))'
+      'render(Hello.new(foo: { foo: "bar", baz: "boo" }))'
     )
   end
 
   it 'handles ruby code with curly braces in attributes' do
     expect(compile_no_imports('<Hello foo={[1, 2, 3].map { |n| n * 2 }} />')).to eq(<<~RUBY.strip)
-      render(Hello.new({ foo: [1, 2, 3].map { |n,|
+      render(Hello.new(foo: [1, 2, 3].map { |n|
         n * 2
       }))
     RUBY

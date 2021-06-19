@@ -1,8 +1,8 @@
 require 'spec_helper'
 
 describe Rux do
-  def render(rux_code)
-    ruby_code = Rux.to_ruby(rux_code)
+  def render(rux_code, raise_on_missing_imports: false)
+    ruby_code = Rux.to_ruby(rux_code, raise_on_missing_imports: raise_on_missing_imports)
     ViewComponent::Base.new.instance_eval(ruby_code)
   end
 
