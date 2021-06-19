@@ -8,10 +8,6 @@ module Rux
         @value = value
         @name_pos = name_pos
       end
-
-      def accept(visitor, &block)
-        visitor.visit_attr(self, &block)
-      end
     end
   end
 end

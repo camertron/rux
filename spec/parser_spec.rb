@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'parser'
 require 'unparser'
 
-describe Rux::Parser do
+describe Rux::RuxParser do
   def compile(rux_code)
     Rux.to_ruby(rux_code)
   end

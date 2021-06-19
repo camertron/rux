@@ -76,8 +76,8 @@ module Rux
     end
 
     def tag
-      tag_pos = pos_of(current)
       consume(:tRUX_TAG_OPEN_START)
+      tag_pos = pos_of(current)
       tag_name = text_of(current)
       consume(:tRUX_TAG_OPEN, :tRUX_TAG_SELF_CLOSING)
       maybe_consume(:tRUX_ATTRIBUTE_SPACES)
@@ -123,12 +123,16 @@ module Rux
     end
 
     def attributes
-      [].tap do |attrs|
+      pos = pos_of(current)
+
+      attrs = [].tap do |attrs|
         while is?(:tRUX_ATTRIBUTE_NAME)
           attrs << attribute
           maybe_consume(:tRUX_ATTRIBUTE_SPACES)
         end
       end
+
+      AST::AttrsNode.new(attrs, pos)
     end
 
     def attribute
@@ -143,7 +147,7 @@ module Rux
         attribute_value
       else
         # if no equals sign, assume boolean attribute
-        AST::StringNode.new("\"true\"", nil)
+        AST::StringNode.new('true', nil)
       end
 
       AST::AttrNode.new(attr_name, attr_value, attr_pos)
@@ -153,9 +157,38 @@ module Rux
       if is?(:tRUX_ATTRIBUTE_VALUE_RUBY_CODE_START)
         attr_ruby_code
       else
-        AST::StringNode.new(text_of(current), pos_of(current)).tap do
-          consume(:tRUX_ATTRIBUTE_VALUE)
+        case type_of(current)
+          when :tRUX_ATTRIBUTE_VALUE_DQ_START
+            attribute_value_dq
+          when :tRUX_ATTRIBUTE_VALUE_SQ_START
+            attribute_value_sq
+          when :tRUX_ATTRIBUTE_UQ_VALUE
+            attribute_value_uq
         end
+      end
+    end
+
+    def attribute_value_dq
+      consume(:tRUX_ATTRIBUTE_VALUE_DQ_START)
+
+      AST::StringNode.new(text_of(current), pos_of(current)).tap do
+        consume(:tRUX_ATTRIBUTE_DQ_VALUE)
+        consume(:tRUX_ATTRIBUTE_VALUE_DQ_END)
+      end
+    end
+
+    def attribute_value_sq
+      consume(:tRUX_ATTRIBUTE_VALUE_SQ_START)
+
+      AST::StringNode.new(text_of(current), pos_of(current)).tap do
+        consume(:tRUX_ATTRIBUTE_SQ_VALUE)
+        consume(:tRUX_ATTRIBUTE_VALUE_SQ_END)
+      end
+    end
+
+    def attribute_value_uq
+      AST::StringNode.new(text_of(current), pos_of(current)).tap do
+        consume(:tRUX_ATTRIBUTE_UQ_VALUE)
       end
     end
 

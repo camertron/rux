@@ -70,7 +70,7 @@ class RuxCLI
 
     files.each do |file|
       ruby_file = file.sub_ext('.rb')
-      yield file, ruby_file
+      yield file.to_s, ruby_file.to_s
     end
   end
 

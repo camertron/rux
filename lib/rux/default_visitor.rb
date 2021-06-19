@@ -87,7 +87,8 @@ module Rux
         next if attribute.name == 'as'
 
         yield [:tCOMMA, [',']] if idx > 0
-        yield [:tLABEL, [attribute.name.gsub('-', '_'), attribute.name_pos]]
+        yield [:tSTRING, [attribute.name, attribute.name_pos]]
+        yield [:tASSOC, ['=>']]
         visit(attribute.value, &block)
         idx += 1
       end

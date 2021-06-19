@@ -1,3 +1,5 @@
+require 'json'
+
 module Rux
   class File
     attr_reader :path
@@ -11,7 +13,12 @@ module Rux
     end
 
     def write(outfile = nil, **kwargs)
-      ::File.write(outfile || default_outfile, to_ruby(**kwargs))
+      ruby_code, source_map = to_ruby(**kwargs)
+      ruby_file = outfile || default_outfile
+      source_map_file = ruby_file.chomp(::File.extname(ruby_file)) + '.map'
+
+      ::File.write(ruby_file, ruby_code)
+      ::File.write(source_map_file, source_map.to_sourcemap.to_json)
     end
 
     def default_outfile

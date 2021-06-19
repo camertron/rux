@@ -1,5 +1,5 @@
 module Rux
-  class Emitter < LexerInterface
+  class TokenEmitter < LexerInterface
     attr_reader :ast, :buffer, :visitor
 
     def initialize(ast, buffer, visitor)
@@ -22,7 +22,7 @@ module Rux
     def each_token(&block)
       visitor.visit(ast) do |token|
         type, (text, pos) = token
-        pos ||= ::Parser::Source::Range.new(buffer, 0, 0)
+        pos ||= ::Parser::Source::Range.new(buffer, -1, -1)
         yield [type, [text, pos]]
       end
     end
