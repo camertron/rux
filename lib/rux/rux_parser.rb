@@ -1,7 +1,7 @@
 require 'parser'
 
 module Rux
-  class Parser
+  class RuxParser
     class UnexpectedTokenError < StandardError; end
     class TagMismatchError < StandardError; end
 
