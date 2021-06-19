@@ -28,29 +28,38 @@ module Rux
   autoload :Imports,           'rux/imports'
   autoload :Lex,               'rux/lex'
   autoload :Lexer,             'rux/lexer'
+  autoload :LexerInterface,    'rux/lexer_interface'
   autoload :RubyLexer,         'rux/ruby_lexer'
-  autoload :RuxParser,         'rux/rux_parser'
+  autoload :RubyParser,        'rux/ruby_parser'
   autoload :RuxLexer,          'rux/rux_lexer'
+  autoload :RuxParser,         'rux/rux_parser'
+  autoload :RubyUnparser,      'rux/ruby_unparser'
+  autoload :SourceMap,         'rux/source_map'
   autoload :StateBasedLexer,   'rux/state_based_lexer'
   autoload :StateMachine,      'rux/state_machine'
   autoload :StateTable,        'rux/state_table'
+  autoload :TokenEmitter,      'rux/token_emitter'
   autoload :TokenMatcher,      'rux/token_matcher'
   autoload :Utils,             'rux/utils'
   autoload :Visitor,           'rux/visitor'
+  autoload :VisitContext,      'rux/visit_context'
+  autoload :VLQ,               'rux/vlq'
 
   class << self
     attr_accessor :tag_builder, :buffer
 
-    def to_ruby(str, visitor: default_visitor, pretty: true, raise_on_missing_imports: true)
-      parse_result = Parser.parse(str)
-      ruby_code = visitor.visit(parse_result.ast)
-      ast, comments = ::Parser::CurrentRuby.parse_with_comments(ruby_code)
+    def to_ruby(str, visitor: default_visitor, raise_on_missing_imports: true)
+      buffer = ::Parser::Source::Buffer.new('(source)', source: str)
+      parse_result = RuxParser.parse(buffer)
+      emitter = TokenEmitter.new(parse_result.ast, buffer, visitor)
+      parser = RubyParser.new(emitter)
+      ast, comments = parser.parse(buffer)
       rewriter = Imports::ImportRewriter.new(
         parse_result.context[:imports],
         raise_on_missing_imports: raise_on_missing_imports
       )
       ast = rewriter.process(ast)
-      ::Unparser.unparse(ast, comments)
+      RubyUnparser.unparse(ast, buffer)
     end
 
     def default_visitor

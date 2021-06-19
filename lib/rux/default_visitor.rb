@@ -2,66 +2,106 @@ require 'cgi'
 
 module Rux
   class DefaultVisitor < Visitor
-    def visit_list(node)
-      node.children.map { |child| visit(child) }.join
+    def visit_list(node, &block)
+      node.children.each { |child| visit(child, &block) }
     end
 
-    def visit_ruby(node)
-      node.code
+    def visit_ruby(node, &block)
+      node.tokens.each(&block)
     end
 
-    def visit_string(node)
-      node.str
+    def visit_string(node, &block)
+      yield [:tSTRING, [node.str, node.pos]]
     end
 
-    def visit_tag(node)
-      ''.tap do |result|
-        block_arg = if (as = node.attrs['as'])
-          visit(as)
+    def visit_tag(node, &block)
+      if node.name.start_with?(/[A-Z]/)
+        yield [:tIDENTIFIER, ['render']]
+        yield [:tLPAREN2,    ['(']]
+        yield [:tCONSTANT,   [node.name, node.pos]]
+        yield [:tDOT,        ['.']]
+        yield [:tIDENTIFIER, ['new']]
+
+        unless node.attrs.empty?
+          yield [:tLPAREN2, ['(']]
+          emit_attrs(node, &block)
+        end
+      else
+        yield [:tCONSTANT,   ['Rux']]
+        yield [:tDOT,        ['.']]
+        yield [:tIDENTIFIER, ['tag']]
+        yield [:tLPAREN2,    ['(']]
+        yield [:tSTRING,     [node.name, node.pos]]
+
+        unless node.attrs.empty?
+          yield [:tCOMMA, [',']]
+          emit_attrs(node, &block)
+        end
+      end
+
+      yield [:tRPAREN, [')']]
+
+      if node.children.size > 1
+        yield [:tLCURLY, ['{']]
+        emit_block_arg(node, &block)
+
+        yield [:tCONSTANT,   ['Rux']]
+        yield [:tDOT,        ['.']]
+        yield [:tIDENTIFIER, ['create_buffer']]
+        yield [:tDOT,        ['.']]
+        yield [:tIDENTIFIER, ['tap']]
+        yield [:tLCURLY,     ['{']]
+        yield [:tPIPE,       ['|']]
+        yield [:tIDENTIFIER, ['_rux_buf_']]
+        yield [:tPIPE,       ['|']]
+
+        node.children.each do |child|
+          yield [:tIDENTIFIER, ['_rux_buf_']]
+          yield [:tLSHFT,      ['<<']]
+          visit(child, &block)
+          yield [:tSEMI,       [';']]
         end
 
-        at = node.attrs.each_with_object([]) do |(k, v), ret|
-          next if k == 'as'
-          ret << Utils.attr_to_hash_elem(k, visit(v))
-        end
-
-        if node.name.start_with?(/[A-Z]/)
-          result << "render(#{node.name}.new"
-
-          unless node.attrs.empty?
-            result << "(#{at.join(', ')})"
-          end
-        else
-          result << "Rux.tag('#{node.name}'"
-
-          unless node.attrs.empty?
-            result << ", { #{at.join(', ')} }"
-          end
-        end
-
-        result << ')'
-
-        if node.children.size > 1
-          result << " { "
-          result << "|#{block_arg}| " if block_arg
-          result << "Rux.create_buffer.tap { |_rux_buf_| "
-
-          node.children.each do |child|
-            result << "_rux_buf_ << #{visit(child).strip};"
-          end
-
-          result << " }.to_s }"
-        elsif node.children.size == 1
-          result << ' { '
-          result << "|#{block_arg}| " if block_arg
-          result << visit(node.children.first).strip
-          result << ' }'
-        end
+        yield [:tRCURLY,     ['}']]
+        yield [:tDOT,        ['.']]
+        yield [:tIDENTIFIER, ['to_s']]
+        yield [:tRCURLY,     ['}']]
+      elsif node.children.size == 1
+        yield [:tLCURLY, ['{']]
+        emit_block_arg(node, &block)
+        visit(node.children.first, &block)
+        yield [:tRCURLY, ['}']]
       end
     end
 
-    def visit_text(node)
-      "\"#{CGI.escape_html(node.text)}\""
+    def visit_text(node, &block)
+      yield [:tSTRING, ["#{CGI.escape_html(node.text)}", node.pos]]
+    end
+
+    private
+
+    def emit_attrs(node, &block)
+      idx = 0
+
+      node.attrs.each do |attribute|
+        next if attribute.name == 'as'
+
+        yield [:tCOMMA, [',']] if idx > 0
+        yield [:tSTRING, [attribute.name, attribute.name_pos]]
+        yield [:tASSOC, ['=>']]
+        visit(attribute.value, &block)
+        idx += 1
+      end
+    end
+
+    def emit_block_arg(node, &block)
+      as_attr = node.attrs.find { |a| a.name == 'as' }
+
+      if as_attr
+        yield [:tPIPE, ['|']]
+        visit(as_attr.value, &block)
+        yield [:tPIPE, ['|']]
+      end
     end
   end
 end

@@ -1,6 +1,10 @@
 require 'spec_helper'
 
-describe Rux::Parser do
+describe Rux::RuxParser do
+  def compile(rux_code)
+    Rux.to_ruby(rux_code)
+  end
+
   it 'handles a single self-closing tag' do
     expect(compile_no_imports("<Hello/>")).to eq("render(Hello.new)")
   end

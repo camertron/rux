@@ -1,8 +1,8 @@
 module Rux
-  class RubyLexer
-    attr_reader :context
-
+  class RubyLexer < LexerInterface
     def initialize(source_buffer, init_pos, context)
+      super()
+
       @source_buffer = source_buffer
       @lexer = BaseLexer.new(source_buffer, init_pos, context)
       @generator = to_enum(:each_token)

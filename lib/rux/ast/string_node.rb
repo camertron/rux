@@ -1,14 +1,15 @@
 module Rux
   module AST
     class StringNode
-      attr_reader :str
+      attr_reader :str, :pos
 
-      def initialize(str)
+      def initialize(str, pos)
         @str = str
+        @pos = pos
       end
 
-      def accept(visitor)
-        visitor.visit_string(self)
+      def accept(visitor, &block)
+        visitor.visit_string(self, &block)
       end
     end
   end
