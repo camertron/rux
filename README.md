@@ -1,4 +1,6 @@
-## rux [![Build Status](https://travis-ci.com/camertron/rux.svg?branch=master)](https://travis-ci.com/camertron/rux)
+## rux
+
+![Unit Tests](https://github.com/camertron/rux/actions/workflows/unit_tests.yml/badge.svg?branch=master)
 
 Rux is a JSX-inspired way to write HTML tags in your Ruby code. It can be used to render view components in Rails via the [rux-rails gem](https://github.com/camertron/rux-rails). This repo however contains only the rux parser itself.
 
@@ -182,7 +184,7 @@ Translating rux code (Ruby + HTML tags) into Ruby code happens in three phases: 
 
 In the parsing phase, the token stream is transformed into an intermediate representation of the code known as an abstract syntax tree, or AST. It's the parser's job to work out which tags are children of other tags, associate attributes with tags, etc.
 
-Finally it's time to generate Ruby code in the emitting phase. The rux gem makes use of the visitor pattern to walk over all the nodes in the AST and generate a big string of Ruby code. This big string is the final product that can be written to a file and executed by the Ruby interpreter.
+Finally it's time to generate Ruby code in the emitting phase. The rux gem makes use of the visitor pattern and the excellent [unparser gem](https://github.com/mbj/unparser) to walk over all the nodes in the AST and generate a big string of Ruby code. This big string is the final product that can be written to a file and executed by the Ruby interpreter.
 
 ## Transpiling Rux to Ruby
 

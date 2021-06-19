@@ -4,8 +4,8 @@ module Rux
       @string = init_str.dup
     end
 
-    def <<(str)
-      @string << (str || '')
+    def <<(*obj)
+      @string << obj.join
     end
 
     def to_s

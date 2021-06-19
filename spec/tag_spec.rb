@@ -83,7 +83,7 @@ describe Rux::Parser do
     expect(compile_no_imports('<Hello foo={[1, 2, 3].map { |n| n * 2 }} />')).to eq(<<~RUBY.strip)
       render(Hello.new({ foo: [1, 2, 3].map { |n,|
         n * 2
-      } }))
+      }))
     RUBY
   end
 
@@ -98,7 +98,7 @@ describe Rux::Parser do
   it 'handles tag bodies containing ruby code with curly braces' do
     expect(compile_no_imports('<Hello>{[1, 2, 3].map { |n| n * 2 }.join(", ")}</Hello>')).to eq(<<~RUBY.strip)
       render(Hello.new) {
-        [1, 2, 3].map { |n,|
+        [1, 2, 3].map { |n|
           n * 2
         }.join(", ")
       }
@@ -108,7 +108,7 @@ describe Rux::Parser do
   it 'handles tag bodies with intermixed text and ruby code' do
     expect(compile_no_imports('<Hello>abc {foo} def {bar} baz</Hello>')).to eq(<<~RUBY.strip)
       render(Hello.new) {
-        Rux.create_buffer.tap { |_rux_buf_,|
+        Rux.create_buffer.tap { |_rux_buf_|
           _rux_buf_ << "abc "
           _rux_buf_ << foo
           _rux_buf_ << " def "
@@ -130,11 +130,38 @@ describe Rux::Parser do
 
     expect(compile_no_imports(rux_code)).to eq(<<~RUBY.strip)
       render(Outer.new) {
-        Rux.create_buffer.tap { |_rux_buf_,|
+        Rux.create_buffer.tap { |_rux_buf_|
           _rux_buf_ << " "
           _rux_buf_ << 5.times.map {
             render(Inner.new) {
-              Rux.create_buffer.tap { |_rux_buf_,|
+              Rux.create_buffer.tap { |_rux_buf_|
+                _rux_buf_ << "What a "
+                _rux_buf_ << @thing
+              }.to_s
+            }
+          }
+          _rux_buf_ << " "
+        }.to_s
+      }
+    RUBY
+  end
+
+  it 'handles HTML tags inside ruby code' do
+    rux_code = <<~RUX
+      <div>
+        {5.times.map do
+          <p>What a {@thing}</p>
+        end}
+      </div>
+    RUX
+
+    expect(compile(rux_code)).to eq(<<~RUBY.strip)
+      Rux.tag("div") {
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_ << " "
+          _rux_buf_ << 5.times.map {
+            Rux.tag("p") {
+              Rux.create_buffer.tap { |_rux_buf_|
                 _rux_buf_ << "What a "
                 _rux_buf_ << @thing
               }.to_s
@@ -165,11 +192,11 @@ describe Rux::Parser do
 
     expect(compile_no_imports(rux_code)).to eq(<<~RUBY.strip)
       render(Outer.new) {
-        Rux.create_buffer.tap { |_rux_buf_,|
+        Rux.create_buffer.tap { |_rux_buf_|
           _rux_buf_ << " "
           _rux_buf_ << 5.times.map {
             Rux.tag("div") {
-              Rux.create_buffer.tap { |_rux_buf_,|
+              Rux.create_buffer.tap { |_rux_buf_|
                 _rux_buf_ << "So "
                 _rux_buf_ << @cool
               }.to_s
@@ -212,7 +239,7 @@ describe Rux::Parser do
   it 'emits spaces between adjacent ruby code snippets' do
     expect(compile_no_imports("<Hello>{first} {second}</Hello>")).to eq(<<~RUBY.strip)
       render(Hello.new) {
-        Rux.create_buffer.tap { |_rux_buf_,|
+        Rux.create_buffer.tap { |_rux_buf_|
           _rux_buf_ << first
           _rux_buf_ << " "
           _rux_buf_ << second

@@ -29,7 +29,7 @@ module Rux
           result << "render(#{node.name}.new"
 
           unless node.attrs.empty?
-            result << "({ #{at.join(', ')} })"
+            result << "(#{at.join(', ')})"
           end
         else
           result << "Rux.tag('#{node.name}'"
