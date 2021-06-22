@@ -8,7 +8,7 @@ module Rux
         @from_const = from_const
       end
 
-      def resolve_const(const)
+      def find(const)
         imported_consts.find { |ic| ic.matches?(const) }
       end
     end

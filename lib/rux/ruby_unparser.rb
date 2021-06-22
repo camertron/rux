@@ -3,8 +3,8 @@ require 'unparser'
 module Rux
   class RubyUnparser
     class << self
-      def unparse(ast, orig_buffer)
-        ruby_code, positions = do_unparse(ast)
+      def unparse(ast, comments, orig_buffer)
+        ruby_code, positions = do_unparse(ast, comments)
         gen_buffer = ::Parser::Source::Buffer.new('(gen)', source: ruby_code)
         source_map = build_source_map(positions, orig_buffer, gen_buffer)
         [ruby_code, source_map]
@@ -12,10 +12,10 @@ module Rux
 
       private
 
-      def do_unparse(ast)
+      def do_unparse(ast, comments)
         positions = []
 
-        ruby_code = ::Unparser.unparse(ast) do |_buffer, old_pos, new_pos|
+        ruby_code = ::Unparser.unparse(ast, comments) do |node, _buffer, old_pos, new_pos|
           next if old_pos.begin == -1
           positions << [old_pos, new_pos]
         end

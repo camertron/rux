@@ -4,6 +4,7 @@ module Rux
     autoload :ImportedConst,  'rux/imports/imported_const'
     autoload :ImportList,     'rux/imports/import_list'
     autoload :ImportRewriter, 'rux/imports/import_rewriter'
+    autoload :ResolvedConst,  'rux/imports/resolved_const'
     autoload :Scope,          'rux/imports/scope'
 
     class MissingConstantError < StandardError

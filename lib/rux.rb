@@ -38,7 +38,7 @@ module Rux
   autoload :StateBasedLexer,   'rux/state_based_lexer'
   autoload :StateMachine,      'rux/state_machine'
   autoload :StateTable,        'rux/state_table'
-  autoload :TokenEmitter,      'rux/token_emitter'
+  autoload :TokenLexer,        'rux/token_lexer'
   autoload :TokenMatcher,      'rux/token_matcher'
   autoload :Utils,             'rux/utils'
   autoload :Visitor,           'rux/visitor'
@@ -48,18 +48,19 @@ module Rux
   class << self
     attr_accessor :tag_builder, :buffer
 
-    def to_ruby(str, visitor: default_visitor, raise_on_missing_imports: true)
+    def to_ruby(str, visitor: default_visitor)
       buffer = ::Parser::Source::Buffer.new('(source)', source: str)
-      parse_result = RuxParser.parse(buffer)
-      emitter = TokenEmitter.new(parse_result.ast, buffer, visitor)
-      parser = RubyParser.new(emitter)
-      ast, comments = parser.parse(buffer)
+      rux_ast, context = RuxParser.parse(buffer)
+      token_lexer = TokenLexer.new(rux_ast, buffer, visitor)
+      parser = RubyParser.new(token_lexer)
+      ruby_ast, comments = parser.parse(buffer)
       rewriter = Imports::ImportRewriter.new(
-        parse_result.context[:imports],
-        raise_on_missing_imports: raise_on_missing_imports
+        buffer, context[:imports]
       )
-      ast = rewriter.process(ast)
-      RubyUnparser.unparse(ast, buffer)
+      ruby_ast = rewriter.process(ruby_ast)
+      ruby_code, source_map = RubyUnparser.unparse(ruby_ast, comments, buffer)
+      context.merge!(source_map: source_map)
+      [ruby_code, context]
     end
 
     def default_visitor

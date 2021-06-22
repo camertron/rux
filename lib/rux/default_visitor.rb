@@ -25,7 +25,10 @@ module Rux
         unless node.attrs.empty?
           yield [:tLPAREN2, ['(']]
           emit_attrs(node, &block)
+          yield [:tRPAREN,  [')']]
         end
+
+        yield [:tRPAREN,  [')']]
       else
         yield [:tCONSTANT,   ['Rux']]
         yield [:tDOT,        ['.']]
@@ -37,9 +40,9 @@ module Rux
           yield [:tCOMMA, [',']]
           emit_attrs(node, &block)
         end
-      end
 
-      yield [:tRPAREN, [')']]
+        yield [:tRPAREN,     [')']]
+      end
 
       if node.children.size > 1
         yield [:tLCURLY, ['{']]
@@ -86,9 +89,9 @@ module Rux
       node.attrs.each do |attribute|
         next if attribute.name == 'as'
 
-        yield [:tCOMMA, [',']] if idx > 0
-        yield [:tSTRING, [attribute.name, attribute.name_pos]]
-        yield [:tASSOC, ['=>']]
+        yield [:tCOMMA,  [',']] if idx > 0
+        yield [:tSYMBOL, [attribute.name.gsub('-', '_'), attribute.name_pos]]
+        yield [:tASSOC,  ['=>']]
         visit(attribute.value, &block)
         idx += 1
       end

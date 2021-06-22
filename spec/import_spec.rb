@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Rux::Parser do
+describe Rux::RuxParser do
   it 'imports a bare constant' do
     expect("import Foo").to import(:Foo)
   end

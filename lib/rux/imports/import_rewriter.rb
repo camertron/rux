@@ -1,13 +1,11 @@
 module Rux
   module Imports
     class ImportRewriter < ::Parser::AST::Processor
-      attr_reader :import_list, :raise_on_missing_imports
+      attr_reader :buffer, :import_list
 
-      alias :raise_on_missing_imports? :raise_on_missing_imports
-
-      def initialize(import_list, raise_on_missing_imports: true)
+      def initialize(buffer, import_list)
+        @buffer = buffer
         @import_list = import_list
-        @raise_on_missing_imports = raise_on_missing_imports
         @scope_stack = [Scope.new('toplevel', nil)]
         @scope_stack.last.add_unless_exists(:Rux)
       end
@@ -31,9 +29,18 @@ module Rux
         resolved_const = import_list.resolve(const)
 
         scope_node, name = *if resolved_const
-          build_const_exp(resolved_const)
+          if resolved_const.as_const
+            build_const_exp(resolved_const.full_const)
+          elsif resolved_const.from_const
+            exp = build_const_exp(resolved_const.from_const || [])
+            s(:const, exp, node.children[1])
+          else
+            node
+          end
         else
-          if raise_on_missing_imports?
+          # @TODO: pull this from sigil
+          raise_on_missing_imports = false
+          if raise_on_missing_imports
             missing = const.map(&:to_s).join('::')
             raise MissingConstantError.new(
               "Cannot find constant '#{missing}' on line #{node.loc.line}, "\
@@ -83,12 +90,18 @@ module Rux
 
       def build_const_exp(consts)
         consts.inject(nil) do |exp, const|
-          s(:const, exp, const)
+          s(:const, exp, const, location: empty_location)
         end
       end
 
-      def s(type, *children)
-        ::Parser::AST::Node.new(type, children)
+      def empty_location
+        ::Parser::Source::Map::Constant.new(
+          *Array.new(3) { ::Parser::Source::Range.new(buffer, -1, -1) }
+        )
+      end
+
+      def s(type, *children, **properties)
+        ::Parser::AST::Node.new(type, children, properties)
       end
     end
   end

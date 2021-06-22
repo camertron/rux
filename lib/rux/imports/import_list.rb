@@ -12,19 +12,18 @@ module Rux
       end
 
       def resolve(const)
-        import, resolved_const = find(const)
-        return nil unless import && resolved_const
+        import, imported_const = find(const)
+        return nil unless import && imported_const
 
-        [
-          *(import.from_const&.const || []),
-          *resolved_const.const
-        ]
+        ResolvedConst.new(import, imported_const)
       end
+
+      private
 
       def find(const)
         imports.each do |import|
-          if resolved = import.resolve_const(const)
-            return import, resolved
+          if imported_const = import.find(const)
+            return import, imported_const
           end
         end
 

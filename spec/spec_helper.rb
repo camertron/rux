@@ -9,12 +9,18 @@ Dir.chdir(__dir__) do
 end
 
 module RuxSpecHelpers
-  def compile(rux_code, pretty: true)
-    Rux.to_ruby(rux_code, pretty: pretty)
+  def compile(rux_code)
+    ruby_code, _context = Rux.to_ruby(rux_code)
+    ruby_code
   end
 
-  def compile_no_imports(rux_code, pretty: true)
-    Rux.to_ruby(rux_code, raise_on_missing_imports: false)
+  def compile_no_imports(rux_code)
+    ruby_code, _context = Rux.to_ruby(
+      # "# imports: false\n\n#{rux_code}"
+      rux_code
+    )
+
+    ruby_code
   end
 end
 

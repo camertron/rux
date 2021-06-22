@@ -1,5 +1,5 @@
 module Rux
-  class TokenEmitter < LexerInterface
+  class TokenLexer < LexerInterface
     attr_reader :ast, :buffer, :visitor
 
     def initialize(ast, buffer, visitor)

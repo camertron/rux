@@ -61,7 +61,6 @@ module Rux
 
     private
 
-<<<<<<< HEAD:lib/rux/rux_parser.rb
     def import
       consume(:tRUX_IMPORT)
 
@@ -91,24 +90,27 @@ module Rux
         loop do
           consts << import_const
           break unless maybe_consume(:tRUX_IMPORT_COMMA)
-=======
+        end
+      end
+    end
+
     def ruby
       tokens = [].tap do |ruby_tokens|
         loop do
           type = type_of(current)
 
-          if type.nil? || RuxLexer.state_table.include?(type_of(current))
-            break
-          end
+          break if type.nil? ||
+            type.to_s.start_with?(RuxLexer.state_table.state_prefix) ||
+            type.to_s.start_with?(ImportLexer.state_table.state_prefix)
 
           ruby_tokens << current
           consume(type_of(current))
->>>>>>> sourcemaps:lib/rux/parser.rb
         end
       end
+
+      AST::RubyNode.new(tokens) unless tokens.empty?
     end
 
-<<<<<<< HEAD:lib/rux/rux_parser.rb
     def import_const
       const_str = text_of(current)
       consume(:tRUX_IMPORT_CONST)
@@ -119,53 +121,6 @@ module Rux
       end
 
       Imports::ImportedConst.parse(const_str, as_const_str)
-    end
-
-    def ruby
-      result = ''.tap do |code|
-        last_token = nil
-
-        loop do
-          type = type_of(current)
-
-          break if type.nil? ||
-            type.to_s.start_with?(RuxLexer.state_table.state_prefix) ||
-            type.to_s.start_with?(ImportLexer.state_table.state_prefix)
-
-          if last_token
-            # Extract white space from between the last two ruby tokens and emit it.
-            # The between text may or may not be entirely whitespace. Tokens that are
-            # removed during the lexing process (eg. annotations, etc) aren't yielded
-            # to this parser, but are obviously still present in the original rux
-            # source code. Slices of the input text can therefore contain any amount
-            # of "throwaway" text. In such cases, the between text will also contain
-            # trailing whitespace that is important to capture, so we extract it off
-            # the end and emit it.
-            between = @lexer.source_buffer.source[pos_of(last_token).end_pos...pos_of(current).begin_pos]
-            code << (between[/\s+\z/] || '')
-          end
-
-          case type
-            when :tNL
-              code << "\n"
-            when :kDO
-              # special case since lexer seems to not emit newlines that
-              # follow a "do"
-              code << "do "
-            else
-              pos = pos_of(current)
-              code << @lexer.source_buffer.source[pos.begin_pos...pos.end_pos]
-          end
-
-          last_token = current
-          consume(type)
-        end
-      end
-
-      result.empty? ? nil : AST::RubyNode.new(result)
-=======
-      AST::RubyNode.new(tokens) unless tokens.empty?
->>>>>>> sourcemaps:lib/rux/parser.rb
     end
 
     def tag
@@ -237,7 +192,9 @@ module Rux
 
       attr_value = if maybe_consume(:tRUX_ATTRIBUTE_EQUALS)
         maybe_consume(:tRUX_ATTRIBUTE_VALUE_SPACES)
-        attribute_value
+        attribute_value.tap do
+          maybe_consume(:tRUX_ATTRIBUTE_VALUE_SPACES)
+        end
       else
         # if no equals sign, assume boolean attribute
         AST::StringNode.new('true', nil)

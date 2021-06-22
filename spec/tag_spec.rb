@@ -1,10 +1,6 @@
 require 'spec_helper'
 
 describe Rux::RuxParser do
-  def compile(rux_code)
-    Rux.to_ruby(rux_code)
-  end
-
   it 'handles a single self-closing tag' do
     expect(compile_no_imports("<Hello/>")).to eq("render(Hello.new)")
   end
@@ -52,7 +48,7 @@ describe Rux::RuxParser do
   end
 
   it 'handles boolean attributes' do
-    expect(compile_no_imports('<Hello disabled />')).to eq(
+    expect(compile_no_imports("<Hello disabled />\n")).to eq(
       'render(Hello.new(disabled: "true"))'
     )
 
@@ -234,7 +230,7 @@ describe Rux::RuxParser do
 
   it 'raises an error on tag mismatch' do
     expect { compile_no_imports('<Hello></Goodbye>') }.to(
-      raise_error(Rux::Parser::TagMismatchError,
+      raise_error(Rux::RuxParser::TagMismatchError,
         "closing tag 'Goodbye' on line 1 did not match opening tag 'Hello' "\
         'on line 1')
     )
