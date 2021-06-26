@@ -3,6 +3,7 @@
 $:.push(File.expand_path('./lib'))
 
 require 'rux'
+require 'parser/current'
 
 buffer = if ARGV[0]
   ::Parser::Source::Buffer.new(ARGV[0]).read
