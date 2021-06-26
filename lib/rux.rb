@@ -42,7 +42,6 @@ module Rux
   autoload :TokenMatcher,      'rux/token_matcher'
   autoload :Utils,             'rux/utils'
   autoload :Visitor,           'rux/visitor'
-  autoload :VisitContext,      'rux/visit_context'
   autoload :VLQ,               'rux/vlq'
 
   class << self
