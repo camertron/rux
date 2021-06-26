@@ -10,19 +10,37 @@ module Rux
         lexer = ::Rux::Lexer.new(buffer)
         parser = new(lexer)
         ast = parser.parse
-        context = lexer.context.merge(imports: parser.imports)
+
+        context = lexer.context.merge(
+          imports: Imports::ImportInfo.new(
+            parser.import_list,
+            import_sigil_from(lexer.context[:comments]) || Imports::Sigil.default
+          )
+        )
+
         [ast, context]
+      end
+
+      private
+
+      def import_sigil_from(comments)
+        comments.each do |comment|
+          if comment.text =~ /\A#\s+imports:\s+(false|true|strict)\z/
+            return Imports::Sigil.find(Regexp.last_match.captures[0])
+          end
+        end
+
+        nil
       end
     end
 
-    attr_reader :imports
+    attr_reader :import_list
 
-    # TODO: handle comments
     def initialize(lexer)
       @lexer = lexer
       @stack = []
       @current = get_next
-      @imports = Imports::ImportList.new
+      @import_list = Imports::ImportList.new
     end
 
     def parse
@@ -43,7 +61,7 @@ module Rux
         break if curlies == 0
 
         if type == :tRUX_IMPORT
-          @imports.add(import)
+          @import_list.add(import)
         elsif rb = ruby
           children << rb
         elsif type == :tRUX_TAG_OPEN_START

@@ -4,7 +4,8 @@ module Rux
       super()
 
       self.source_buffer = source_buffer
-      context[:comments] = self.comments = []
+      context[:comments] ||= []
+      self.comments = context[:comments]
       reset_to(init_pos)
     end
 

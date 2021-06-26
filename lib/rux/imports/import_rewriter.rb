@@ -1,11 +1,11 @@
 module Rux
   module Imports
     class ImportRewriter < ::Parser::AST::Processor
-      attr_reader :buffer, :import_list
+      attr_reader :buffer, :import_info
 
-      def initialize(buffer, import_list)
+      def initialize(buffer, import_info)
         @buffer = buffer
-        @import_list = import_list
+        @import_info = import_info
         @scope_stack = [Scope.new('toplevel', nil)]
         @scope_stack.last.add_unless_exists(:Rux)
       end
@@ -23,10 +23,12 @@ module Rux
       end
 
       def on_const(node)
+        return super if import_info.sigil == Sigil.s_false
+
         const = extract_const(node)
         return super if find_scope(const)
 
-        resolved_const = import_list.resolve(const)
+        resolved_const = import_info.resolve(const)
 
         scope_node, name = *if resolved_const
           if resolved_const.as_const
@@ -38,9 +40,7 @@ module Rux
             node
           end
         else
-          # @TODO: pull this from sigil
-          raise_on_missing_imports = false
-          if raise_on_missing_imports
+          if raise_on_missing?
             missing = const.map(&:to_s).join('::')
             raise MissingConstantError.new(
               "Cannot find constant '#{missing}' on line #{node.loc.line}, "\
@@ -58,6 +58,10 @@ module Rux
       end
 
       private
+
+      def raise_on_missing?
+        import_info.sigil == Sigil.s_strict
+      end
 
       def find_scope(const)
         cur = @scope_stack.last
