@@ -75,12 +75,6 @@ module Rux
         name_list.index(mapping.name)
       )
     end
-
-    def adjust_group(group, prev_group)
-      group.map.with_index do |field, idx|
-        field - prev_group[idx]
-      end
-    end
   end
 
   class SourceMap
