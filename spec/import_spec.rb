@@ -121,8 +121,9 @@ describe Rux::RuxParser do
     RUBY
   end
 
-  it "raises an exception if a constant hasn't been imported" do
+  it "in strict mode, raises an exception if a constant hasn't been imported" do
     rux_code = <<~RUX
+      # imports: strict
       Foo.do_something
     RUX
 
@@ -174,6 +175,8 @@ describe Rux::RuxParser do
 
   it 'errors when encountering constant references at the wrong nesting level defined in the same file' do
     rux_code = <<~RUX
+      # imports: strict
+
       module Foo
         class Bar
         end

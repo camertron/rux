@@ -13,15 +13,6 @@ module RuxSpecHelpers
     ruby_code, _context = Rux.to_ruby(rux_code)
     ruby_code
   end
-
-  def compile_no_imports(rux_code)
-    ruby_code, _context = Rux.to_ruby(
-      # "# imports: false\n\n#{rux_code}"
-      rux_code
-    )
-
-    ruby_code
-  end
 end
 
 module RuxSpecMatchers
