@@ -2,7 +2,7 @@ source 'https://rubygems.org'
 
 gemspec
 
-gem 'unparser', path: '~/workspace/unparser'
+gem 'unparser', github: 'camertron/unparser', branch: 'source_location_callback'
 
 group :development, :test do
   gem 'pry-byebug'

@@ -52,9 +52,22 @@ module Rux
           node
         end
 
-        node.updated(nil, [
-          scope_node, name
-        ])
+        properties = {}
+
+        # If we're replacing a single constant like Foo with a scoped constant like
+        # Foo::Bar, the original node will not have a double colon node and therefore
+        # no location for it, which will cause problems down the line when unparser
+        # tries to turn the AST back into Ruby code. We detect that condition below
+        # and patch in an empty location for the phantom double colon node.
+        if resolved_const && resolved_const.full_const.size > 1 && const.size == 1
+          properties[:location] = ::Parser::Source::Map::Constant.new(
+            empty_range,
+            node.location.name,
+            node.location.expression
+          )
+        end
+
+        node.updated(nil, [scope_node, name], properties)
       end
 
       private
@@ -100,8 +113,12 @@ module Rux
 
       def empty_location
         ::Parser::Source::Map::Constant.new(
-          *Array.new(3) { ::Parser::Source::Range.new(buffer, -1, -1) }
+          *Array.new(3) { empty_range }
         )
+      end
+
+      def empty_range
+        ::Parser::Source::Range.new(buffer, -1, -1)
       end
 
       def s(type, *children, **properties)

@@ -14,7 +14,14 @@ module Rux
     def advance
       @generator.next
     rescue StopIteration
-      [nil, ['$eof']]
+      loc = ::Parser::Source::Range.new(
+        buffer, buffer.source.length, buffer.source.length
+      )
+
+      # The Parser gem expects the EOF token to be false instead of nil.
+      # This is somewhat confusing because Parser _used_ to use nil,
+      # which is why the rest of rux uses nil too. ¯\_(ツ)_/¯
+      [false, ['$eof', loc]]
     end
 
     private

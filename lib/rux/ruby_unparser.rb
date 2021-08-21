@@ -15,7 +15,7 @@ module Rux
       def do_unparse(ast, comments)
         positions = []
 
-        ruby_code = ::Unparser.unparse(ast, comments) do |node, _buffer, old_pos, new_pos|
+        ruby_code = ::Unparser.unparse(ast, comments) do |_buffer, old_pos, new_pos|
           next if old_pos.begin == -1
           positions << [old_pos, new_pos]
         end
