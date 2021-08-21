@@ -37,5 +37,11 @@ module Rux
         !chars.include?(char)
       end
     end
+
+    class EofPattern
+      def matches?(eof_sym)
+        eof_sym == :eof
+      end
+    end
   end
 end

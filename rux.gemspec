@@ -11,10 +11,12 @@ Gem::Specification.new do |s|
   s.platform = Gem::Platform::RUBY
 
   s.add_dependency 'parser', '~> 3.0'
-  s.add_dependency 'unparser', '~> 0.5'
+  s.add_dependency 'unparser', '~> 0.6'
 
   s.require_path = 'lib'
+
   s.executables << 'ruxc'
+  s.executables << 'ruxlex'
 
   s.files = Dir['{lib,spec}/**/*', 'Gemfile', 'LICENSE', 'CHANGELOG.md', 'README.md', 'Rakefile', 'rux.gemspec']
 end

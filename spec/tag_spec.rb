@@ -1,12 +1,6 @@
 require 'spec_helper'
-require 'parser'
-require 'unparser'
 
-describe Rux::Parser do
-  def compile(rux_code)
-    Rux.to_ruby(rux_code)
-  end
-
+describe Rux::RuxParser do
   it 'handles a single self-closing tag' do
     expect(compile("<Hello/>")).to eq("render(Hello.new)")
   end
@@ -54,7 +48,7 @@ describe Rux::Parser do
   end
 
   it 'handles boolean attributes' do
-    expect(compile('<Hello disabled />')).to eq(
+    expect(compile("<Hello disabled />\n")).to eq(
       'render(Hello.new(disabled: "true"))'
     )
 
@@ -87,7 +81,7 @@ describe Rux::Parser do
 
   it 'handles ruby code with curly braces in attributes' do
     expect(compile('<Hello foo={[1, 2, 3].map { |n| n * 2 }} />')).to eq(<<~RUBY.strip)
-      render(Hello.new(foo: [1, 2, 3].map { |n,|
+      render(Hello.new(foo: [1, 2, 3].map { |n|
         n * 2
       }))
     RUBY
@@ -104,7 +98,7 @@ describe Rux::Parser do
   it 'handles tag bodies containing ruby code with curly braces' do
     expect(compile('<Hello>{[1, 2, 3].map { |n| n * 2 }.join(", ")}</Hello>')).to eq(<<~RUBY.strip)
       render(Hello.new) {
-        [1, 2, 3].map { |n,|
+        [1, 2, 3].map { |n|
           n * 2
         }.join(", ")
       }
@@ -114,7 +108,7 @@ describe Rux::Parser do
   it 'handles tag bodies with intermixed text and ruby code' do
     expect(compile('<Hello>abc {foo} def {bar} baz</Hello>')).to eq(<<~RUBY.strip)
       render(Hello.new) {
-        Rux.create_buffer.tap { |_rux_buf_,|
+        Rux.create_buffer.tap { |_rux_buf_|
           _rux_buf_ << "abc "
           _rux_buf_ << foo
           _rux_buf_ << " def "
@@ -136,14 +130,45 @@ describe Rux::Parser do
 
     expect(compile(rux_code)).to eq(<<~RUBY.strip)
       render(Outer.new) {
-        5.times.map {
-          render(Inner.new) {
-            Rux.create_buffer.tap { |_rux_buf_,|
-              _rux_buf_ << "What a "
-              _rux_buf_ << @thing
-            }.to_s
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_ << " "
+          _rux_buf_ << 5.times.map {
+            render(Inner.new) {
+              Rux.create_buffer.tap { |_rux_buf_|
+                _rux_buf_ << "What a "
+                _rux_buf_ << @thing
+              }.to_s
+            }
           }
-        }
+          _rux_buf_ << " "
+        }.to_s
+      }
+    RUBY
+  end
+
+  it 'handles HTML tags inside ruby code' do
+    rux_code = <<~RUX
+      <div>
+        {5.times.map do
+          <p>What a {@thing}</p>
+        end}
+      </div>
+    RUX
+
+    expect(compile(rux_code)).to eq(<<~RUBY.strip)
+      Rux.tag("div") {
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_ << " "
+          _rux_buf_ << 5.times.map {
+            Rux.tag("p") {
+              Rux.create_buffer.tap { |_rux_buf_|
+                _rux_buf_ << "What a "
+                _rux_buf_ << @thing
+              }.to_s
+            }
+          }
+          _rux_buf_ << " "
+        }.to_s
       }
     RUBY
   end
@@ -167,14 +192,18 @@ describe Rux::Parser do
 
     expect(compile(rux_code)).to eq(<<~RUBY.strip)
       render(Outer.new) {
-        5.times.map {
-          Rux.tag("div") {
-            Rux.create_buffer.tap { |_rux_buf_,|
-              _rux_buf_ << "So "
-              _rux_buf_ << @cool
-            }.to_s
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_ << " "
+          _rux_buf_ << 5.times.map {
+            Rux.tag("div") {
+              Rux.create_buffer.tap { |_rux_buf_|
+                _rux_buf_ << "So "
+                _rux_buf_ << @cool
+              }.to_s
+            }
           }
-        }
+          _rux_buf_ << " "
+        }.to_s
       }
     RUBY
   end
@@ -201,9 +230,21 @@ describe Rux::Parser do
 
   it 'raises an error on tag mismatch' do
     expect { compile('<Hello></Goodbye>') }.to(
-      raise_error(Rux::Parser::TagMismatchError,
+      raise_error(Rux::RuxParser::TagMismatchError,
         "closing tag 'Goodbye' on line 1 did not match opening tag 'Hello' "\
         'on line 1')
     )
+  end
+
+  it 'emits spaces between adjacent ruby code snippets' do
+    expect(compile("<Hello>{first} {second}</Hello>")).to eq(<<~RUBY.strip)
+      render(Hello.new) {
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_ << first
+          _rux_buf_ << " "
+          _rux_buf_ << second
+        }.to_s
+      }
+    RUBY
   end
 end

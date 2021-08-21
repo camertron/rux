@@ -1,0 +1,20 @@
+#! /usr/bin/env ruby
+
+$:.push(File.expand_path('./lib'))
+
+require 'rux'
+require 'parser/current'
+
+buffer = if ARGV[0]
+  ::Parser::Source::Buffer.new(ARGV[0]).read
+else
+  ::Parser::Source::Buffer.new('(source)', source: STDIN.read)
+end
+
+lexer = ::Rux::Lexer.new(buffer)
+
+while true
+  token, (text, _) = lexer.advance
+  puts "#{token}: #{text.inspect}"
+  break unless token
+end

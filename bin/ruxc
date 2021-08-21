@@ -14,10 +14,9 @@ class RuxCLI
     end
 
     options = {
-      recursive: false,
-      pretty: true,
       annotations_enabled: true,
       annotations_path: Rux.default_annotations_path
+      sourcemaps: true
     }
 
     if argv.first != '-h' && argv.first != '--help'
@@ -26,14 +25,6 @@ class RuxCLI
 
     parser = OptionParser.new do |opts|
       opts.banner = "Usage: ruxc path [options]"
-
-      oneline(<<~DESC).tap do |desc|
-        Prettify generated Ruby code (default: #{options[:pretty]}).
-      DESC
-        opts.on('-p', '--[no-]pretty', desc) do |pretty|
-          options[:pretty] = pretty
-        end
-      end
 
       oneline(<<~DESC).tap do |desc|
         Generate RBI files from rux type annotations (default: #{options[:annotations_enabled]}).
@@ -48,6 +39,14 @@ class RuxCLI
       DESC
         opts.on('-dDIR', '--annotations-path=DIR', desc) do |annotations_path|
           options[:annotations_path] = annotations_path
+        end
+      end
+
+      oneline(<<~DESC).tap do |desc|
+        Emit sourcemaps for transpiled rux files (default: #{options[:sourcemaps]}).
+      DESC
+        opts.on('-m', '--[no-]sourcemaps', desc) do |sourcemaps|
+          options[:sourcemaps] = sourcemaps
         end
       end
 
@@ -91,7 +90,7 @@ class RuxCLI
         annotations_path.join(relative_file).sub_ext('.rbi')
       end
 
-      yield file, ruby_file, rbi_file
+      yield file.to_s, ruby_file.to_s, rbi_file.to_s
     end
   end
 
@@ -99,8 +98,8 @@ class RuxCLI
     @in_path ||= Pathname(@options[:in_path]).expand_path
   end
 
-  def pretty?
-    @options[:pretty]
+  def emit_sourcemaps?
+    @options[:sourcemaps]
   end
 
   private
@@ -123,11 +122,22 @@ cli.validate
 
 cli.each_file do |in_file, out_file, rbi_file|
   rux_file = Rux::File.new(in_file)
-  rux_file.write(out_file, pretty: cli.pretty?)
-  puts "Wrote #{out_file}"
+  ruby_code, context = rux_file.to_ruby
 
-  if rbi_file
-    FileUtils.mkdir_p(rbi_file.dirname)
-    ::File.write(rbi_file, rux_file.to_rbi)
+  ::File.write(rux_file.default_outfile, ruby_code)
+  puts "Wrote #{rux_file.default_outfile}"
+
+  if cli.emit_sourcemaps?
+    ::File.write(
+      rux_file.default_sourcemap_file,
+      context[:source_map].to_sourcemap.to_json
+    )
+
+    puts "Wrote #{rux_file.default_sourcemap_file}"
+  end
+
+  if cli.annotations_enabled?
+    ::File.write(rbi_file, context[:annotations].to_rbi)
+    puts "Wrote #{rbi_file}"
   end
 end

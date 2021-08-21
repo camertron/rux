@@ -1,5 +1,6 @@
 require 'parser/current'
 require 'unparser'
+require 'json'
 
 module Rux
   class File
@@ -10,32 +11,19 @@ module Rux
       @visitor = visitor
     end
 
-    def to_ruby(pretty: true)
-      ruby_code = visitor.visit(parse_result.ast)
-      return ruby_code unless pretty
-
-      ::Unparser.unparse(
-        *::Parser::CurrentRuby.parse_with_comments(ruby_code)
-      )
-    end
-
-    def to_rbi
-      parse_result.context[:annotations].to_rbi
-    end
-
-    def write(outfile = nil, **kwargs)
-      ::File.write(outfile || default_outfile, to_ruby(**kwargs))
+    def to_ruby(**kwargs)
+      Rux.to_ruby(contents, **kwargs)
     end
 
     def default_outfile
       @default_outfile ||= "#{path.chomp('.rux')}.rb"
     end
 
-    private
-
-    def parse_result
-      @parse_result ||= Parser.parse(contents)
+    def default_sourcemap_file
+      @default_sourcemap_file = "#{default_outfile.chomp('.rb')}.map"
     end
+
+    private
 
     def contents
       @contents ||= ::File.read(path)
