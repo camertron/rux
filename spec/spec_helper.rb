@@ -1,6 +1,25 @@
+$:.push(__dir__)
+
 require 'rspec'
 require 'rux'
 require 'pry-byebug'
+
+Dir.chdir(__dir__) do
+  Dir['support/*.rb'].each { |f| require f }
+end
+
+module RuxSpecHelpers
+  def compile(rux_code)
+    ruby_code, _context = Rux.to_ruby(rux_code)
+    ruby_code
+  end
+end
+
+module RuxSpecMatchers
+  def import(*const)
+    Rux::ImportMatcher.new(*const)
+  end
+end
 
 # a very basic implementation of the view_component lib
 module ViewComponent
@@ -34,4 +53,6 @@ class ArgsComponent < ViewComponent::Base
 end
 
 RSpec.configure do |config|
+  config.include RuxSpecHelpers
+  config.include RuxSpecMatchers
 end

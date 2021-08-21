@@ -3,12 +3,13 @@ module Rux
     class EOFError < StandardError; end
     class TransitionError < StandardError; end
 
-    attr_reader :source_buffer
+    attr_reader :source_buffer, :context
 
-    def initialize(source_buffer)
+    def initialize(source_buffer, context = {})
       @source_buffer = source_buffer
-      @stack = [RubyLexer.new(source_buffer, 0)]
+      @stack = [RubyLexer.new(source_buffer, 0, context)]
       @generator = to_enum(:each_token)
+      @context = context
     end
 
     def advance
@@ -47,8 +48,6 @@ module Rux
         case type
           when :tRESET
             @p = pos.begin_pos
-          when :tSKIP
-            next
           else
             yield token
 

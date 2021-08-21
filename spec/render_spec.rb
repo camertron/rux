@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Rux do
   def render(rux_code)
-    ruby_code = Rux.to_ruby(rux_code)
+    ruby_code, _context = Rux.to_ruby(rux_code)
     ViewComponent::Base.new.instance_eval(ruby_code)
   end
 

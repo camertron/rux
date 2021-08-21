@@ -1,12 +1,12 @@
 module Rux
   module Lex
     class State
-      def self.parse(state_str, transition_strs, inputs)
+      def self.parse(state_str, transition_strs, inputs, prefix)
         is_terminal = state_str.end_with?('*')
-        state_name = "tRUX_#{state_str.chomp('*').upcase}".to_sym
+        state_name = "#{prefix}#{state_str.chomp('*').upcase}".to_sym
 
         transitions = transition_strs.each_with_object([]).with_index do |(ts, ret), idx|
-          ret << Transition.parse(ts, inputs[idx]) if ts
+          ret << Transition.parse(ts, inputs[idx], prefix) if ts
         end
 
         new(state_name, is_terminal, transitions)

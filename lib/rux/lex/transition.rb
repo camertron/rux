@@ -3,9 +3,9 @@ module Rux
     class Transition
       attr_reader :input, :to_state, :advance_count
 
-      def self.parse(str, input)
+      def self.parse(str, input, prefix)
         to_state, advance_count = str.match(/\A(\w+)\[?(-?\d+)?\]?/).captures
-        new(input, :"tRUX_#{to_state.upcase}", (advance_count || 1).to_i)
+        new(input, :"#{prefix}#{to_state.upcase}", (advance_count || 1).to_i)
       end
 
       def initialize(input, to_state, advance_count)

@@ -1,28 +1,46 @@
 require 'parser'
 
 module Rux
-  class Parser
+  class RuxParser
     class UnexpectedTokenError < StandardError; end
     class TagMismatchError < StandardError; end
 
     class << self
-      def parse_file(path)
-        buffer = ::Parser::Source::Buffer.new(path).read
+      def parse(buffer)
         lexer = ::Rux::Lexer.new(buffer)
-        new(lexer).parse
+        parser = new(lexer)
+        ast = parser.parse
+
+        context = lexer.context.merge(
+          imports: Imports::ImportInfo.new(
+            parser.import_list,
+            import_sigil_from(lexer.context[:comments]) || Imports::Sigil.default
+          )
+        )
+
+        [ast, context]
       end
 
-      def parse(str)
-        buffer = ::Parser::Source::Buffer.new('(source)', source: str)
-        lexer = ::Rux::Lexer.new(buffer)
-        new(lexer).parse
+      private
+
+      def import_sigil_from(comments)
+        comments.each do |comment|
+          if comment.text =~ /\A#\s+imports:\s+(false|true|strict)\z/
+            return Imports::Sigil.find(Regexp.last_match.captures[0])
+          end
+        end
+
+        nil
       end
     end
+
+    attr_reader :import_list
 
     def initialize(lexer)
       @lexer = lexer
       @stack = []
       @current = get_next
+      @import_list = Imports::ImportList.new
     end
 
     def parse
@@ -42,14 +60,17 @@ module Rux
 
         break if curlies == 0
 
-        if rb = ruby
+        if type == :tRUX_IMPORT
+          @import_list.add(import)
+        elsif rb = ruby
           children << rb
-        elsif type_of(current) == :tRUX_TAG_OPEN_START
+        elsif type == :tRUX_TAG_OPEN_START
           children << tag
         else
+          pos = pos_of(current)
           raise UnexpectedTokenError,
             'expected ruby code or the start of a rux tag but found '\
-              "#{type_of(current)} instead"
+              "#{type_of(current)} instead on line #{pos.line}"
         end
       end
 
@@ -58,42 +79,78 @@ module Rux
 
     private
 
-    def ruby
-      ruby_start = pos_of(current).begin_pos
+    def import
+      consume(:tRUX_IMPORT)
 
-      loop do
-        type = type_of(current)
+      if type_of(current) == :tRUX_IMPORT_OPEN_CURLY
+        import_from
+      else
+        import_bare
+      end
+    end
 
-        if type.nil? || RuxLexer.state_table.include?(type_of(current))
-          break
+    def import_from
+      consume(:tRUX_IMPORT_OPEN_CURLY)
+      imported_consts = import_const_list
+      consume(:tRUX_IMPORT_CLOSE_CURLY)
+      consume(:tRUX_IMPORT_FROM)
+      from_const = import_const
+
+      Imports::Import.new(imported_consts, from_const)
+    end
+
+    def import_bare
+      Imports::Import.new(import_const_list)
+    end
+
+    def import_const_list
+      [].tap do |consts|
+        loop do
+          consts << import_const
+          break unless maybe_consume(:tRUX_IMPORT_COMMA)
         end
+      end
+    end
 
-        consume(type_of(current))
+    def ruby
+      tokens = [].tap do |ruby_tokens|
+        loop do
+          type = type_of(current)
+
+          break if type.nil? ||
+            type.to_s.start_with?(RuxLexer.state_table.state_prefix) ||
+            type.to_s.start_with?(ImportLexer.state_table.state_prefix)
+
+          ruby_tokens << current
+          consume(type_of(current))
+        end
       end
 
-      unless type_of(current)
-        return AST::RubyNode.new(
-          @lexer.source_buffer.source[ruby_start..-1]
-        )
+      AST::RubyNode.new(tokens) unless tokens.empty?
+    end
+
+    def import_const
+      const_str = text_of(current)
+      consume(:tRUX_IMPORT_CONST)
+
+      if maybe_consume(:tRUX_IMPORT_AS)
+        as_const_str = text_of(current)
+        consume(:tRUX_IMPORT_CONST)
       end
 
-      if pos_of(current).begin_pos != ruby_start
-        AST::RubyNode.new(
-          @lexer.source_buffer.source[ruby_start...(pos_of(current).end_pos - 1)]
-        )
-      end
+      Imports::ImportedConst.parse(const_str, as_const_str)
     end
 
     def tag
       consume(:tRUX_TAG_OPEN_START)
-      tag_name = text_of(current)
       tag_pos = pos_of(current)
+      tag_name = text_of(current)
       consume(:tRUX_TAG_OPEN, :tRUX_TAG_SELF_CLOSING)
       maybe_consume(:tRUX_ATTRIBUTE_SPACES)
       attrs = attributes
       maybe_consume(:tRUX_ATTRIBUTE_SPACES)
       maybe_consume(:tRUX_TAG_OPEN_END)
-      tag_node = AST::TagNode.new(tag_name, attrs)
+      tag_node = AST::TagNode.new(tag_name, attrs, tag_pos)
 
       if is?(:tRUX_TAG_SELF_CLOSING_END)
         consume(:tRUX_TAG_SELF_CLOSING_END)
@@ -132,40 +189,74 @@ module Rux
     end
 
     def attributes
-      {}.tap do |attrs|
-        while is?(:tRUX_ATTRIBUTE_NAME)
-          key, value = attribute
-          attrs[key] = value
+      pos = pos_of(current)
 
+      attrs = [].tap do |attrs|
+        while is?(:tRUX_ATTRIBUTE_NAME)
+          attrs << attribute
           maybe_consume(:tRUX_ATTRIBUTE_SPACES)
         end
       end
+
+      AST::AttrsNode.new(attrs, pos)
     end
 
     def attribute
       maybe_consume(:tRUX_ATTRIBUTE_SPACES)
       attr_name = text_of(current)
+      attr_pos = pos_of(current)
       consume(:tRUX_ATTRIBUTE_NAME)
       maybe_consume(:tRUX_ATTRIBUTE_EQUALS_SPACES)
 
       attr_value = if maybe_consume(:tRUX_ATTRIBUTE_EQUALS)
         maybe_consume(:tRUX_ATTRIBUTE_VALUE_SPACES)
-        attribute_value
+        attribute_value.tap do
+          maybe_consume(:tRUX_ATTRIBUTE_VALUE_SPACES)
+        end
       else
         # if no equals sign, assume boolean attribute
-        AST::StringNode.new("\"true\"")
+        AST::StringNode.new('true', nil)
       end
 
-      [attr_name, attr_value]
+      AST::AttrNode.new(attr_name, attr_value, attr_pos)
     end
 
     def attribute_value
       if is?(:tRUX_ATTRIBUTE_VALUE_RUBY_CODE_START)
         attr_ruby_code
       else
-        AST::StringNode.new(text_of(current)).tap do
-          consume(:tRUX_ATTRIBUTE_VALUE)
+        case type_of(current)
+          when :tRUX_ATTRIBUTE_VALUE_DQ_START
+            attribute_value_dq
+          when :tRUX_ATTRIBUTE_VALUE_SQ_START
+            attribute_value_sq
+          when :tRUX_ATTRIBUTE_UQ_VALUE
+            attribute_value_uq
         end
+      end
+    end
+
+    def attribute_value_dq
+      consume(:tRUX_ATTRIBUTE_VALUE_DQ_START)
+
+      AST::StringNode.new(text_of(current), pos_of(current)).tap do
+        consume(:tRUX_ATTRIBUTE_DQ_VALUE)
+        consume(:tRUX_ATTRIBUTE_VALUE_DQ_END)
+      end
+    end
+
+    def attribute_value_sq
+      consume(:tRUX_ATTRIBUTE_VALUE_SQ_START)
+
+      AST::StringNode.new(text_of(current), pos_of(current)).tap do
+        consume(:tRUX_ATTRIBUTE_SQ_VALUE)
+        consume(:tRUX_ATTRIBUTE_VALUE_SQ_END)
+      end
+    end
+
+    def attribute_value_uq
+      AST::StringNode.new(text_of(current), pos_of(current)).tap do
+        consume(:tRUX_ATTRIBUTE_UQ_VALUE)
       end
     end
 
@@ -182,8 +273,9 @@ module Rux
         literal_ruby_code
       else
         lit = squeeze_lit(text_of(current))
+        pos = pos_of(current)
         consume(:tRUX_LITERAL)
-        AST::TextNode.new(lit) unless lit.empty?
+        AST::TextNode.new(lit, pos) unless lit.empty?
       end
     end
 

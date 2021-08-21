@@ -1,21 +1,26 @@
+require 'parser/current'
+require 'unparser'
+require 'json'
+
 module Rux
   class File
-    attr_reader :path
+    attr_reader :path, :visitor
 
-    def initialize(path)
+    def initialize(path, visitor: Rux.default_visitor)
       @path = path
+      @visitor = visitor
     end
 
-    def to_ruby(visitor: Rux.default_visitor, **kwargs)
-      Rux.to_ruby(contents, visitor: visitor, **kwargs)
-    end
-
-    def write(outfile = nil, **kwargs)
-      ::File.write(outfile || default_outfile, to_ruby(**kwargs))
+    def to_ruby(**kwargs)
+      Rux.to_ruby(contents, **kwargs)
     end
 
     def default_outfile
-      @outfile ||= "#{path.chomp('.rux')}.rb"
+      @default_outfile ||= "#{path.chomp('.rux')}.rb"
+    end
+
+    def default_sourcemap_file
+      @default_sourcemap_file = "#{default_outfile.chomp('.rb')}.map"
     end
 
     private

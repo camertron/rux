@@ -15,7 +15,7 @@ class RuxCLI
 
     options = {
       recursive: false,
-      pretty: true
+      sourcemaps: true
     }
 
     if argv.first != '-h' && argv.first != '--help'
@@ -26,10 +26,10 @@ class RuxCLI
       opts.banner = "Usage: ruxc path [options]"
 
       oneline(<<~DESC).tap do |desc|
-        Prettify generated Ruby code (default: #{options[:pretty]}).
+        Emit sourcemaps for transpiled rux files (default: #{options[:sourcemaps]}).
       DESC
-        opts.on('-p', '--[no-]pretty', desc) do |pretty|
-          options[:pretty] = pretty
+        opts.on('-m', '--[no-]sourcemaps', desc) do |sourcemaps|
+          options[:sourcemaps] = sourcemaps
         end
       end
 
@@ -67,7 +67,7 @@ class RuxCLI
 
     files.each do |file|
       ruby_file = file.sub_ext('.rb')
-      yield file, ruby_file
+      yield file.to_s, ruby_file.to_s
     end
   end
 
@@ -75,8 +75,8 @@ class RuxCLI
     @in_path ||= Pathname(@options[:in_path]).expand_path
   end
 
-  def pretty?
-    @options[:pretty]
+  def emit_sourcemaps?
+    @options[:sourcemaps]
   end
 
   private
@@ -91,6 +91,17 @@ cli.validate
 
 cli.each_file do |in_file, out_file, rbi_file|
   rux_file = Rux::File.new(in_file)
-  rux_file.write(out_file, pretty: cli.pretty?)
-  puts "Wrote #{out_file}"
+  ruby_code, context = rux_file.to_ruby
+
+  ::File.write(rux_file.default_outfile, ruby_code)
+  puts "Wrote #{rux_file.default_outfile}"
+
+  if cli.emit_sourcemaps?
+    ::File.write(
+      rux_file.default_sourcemap_file,
+      context[:source_map].to_sourcemap.to_json
+    )
+
+    puts "Wrote #{rux_file.default_sourcemap_file}"
+  end
 end
