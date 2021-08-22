@@ -15,7 +15,7 @@ class RuxCLI
 
     options = {
       annotations_enabled: true,
-      annotations_path: Rux.default_annotations_path
+      annotations_path: Rux.default_annotations_path,
       sourcemaps: true
     }
 
@@ -102,11 +102,11 @@ class RuxCLI
     @options[:sourcemaps]
   end
 
-  private
-
   def annotations_enabled?
     @options[:annotations_enabled]
   end
+
+  private
 
   def annotations_path
     @annotations_path ||= Pathname(@options[:annotations_path]).expand_path

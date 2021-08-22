@@ -4,7 +4,7 @@ module Rux
       super()
 
       @source_buffer = source_buffer
-      @lexer = BaseLexer.new(source_buffer, init_pos, context)
+      @lexer = AnnotationLexer.new(source_buffer, init_pos, context)
       @generator = to_enum(:each_token)
       @matcher = TokenMatcher.new(@lexer)
       @context = context

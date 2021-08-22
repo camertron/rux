@@ -20,6 +20,8 @@ module Rux
 
     def reset_to(pos)
       @lexer.reset_to(pos)
+      @generator = to_enum(:each_token)
+      @current = get_next
     end
 
     def advance
@@ -61,42 +63,45 @@ module Rux
       loop do
         break unless type_of(current)
 
-        case type_of(current)
-          when :kMODULE
-            mod = handle_module(block)
-            current_scope.scopes << mod
-            push_scope(mod)
-          when :kCLASS
-            klass = handle_class(block)
-            current_scope.scopes << klass
-            push_scope(klass)
-          when :kDEF
-            mtd = handle_def(block)
-            current_scope.methods << mtd
-            push_scope(mtd)
-          when :kEND
-            pop_scope
-            consume(:kEND, block)
-          when :tIDENTIFIER
-            ident = text_of(current)
+        handle_current(block)
+      end
+    end
 
-            case ident
-              when 'private', 'public'
-                if ivar = maybe_handle_ivar(block)
-                  current_scope.ivars << ivar
-                end
-              when 'include', 'extend', 'prepend'
-                consume(:tIDENTIFIER, block)
-                const = handle_constant(block)
-                current_scope.mixins << [ident.to_sym, const]
-              else
-                consume(type_of(current), block)
-                next
-            end
+    def handle_current(block)
+      case type_of(current)
+        when :kMODULE
+          mod = handle_module(block)
+          current_scope.scopes << mod
+          push_scope(mod)
+        when :kCLASS
+          klass = handle_class(block)
+          current_scope.scopes << klass
+          push_scope(klass)
+        when :kDEF
+          mtd = handle_def(block)
+          current_scope.methods << mtd
+          push_scope(mtd)
+        when :kEND
+          pop_scope
+          consume(:kEND, block)
+        when :tIDENTIFIER
+          ident = text_of(current)
 
-          else
-            consume(type_of(current), block)
-        end
+          case ident
+            when 'private', 'public'
+              if ivar = maybe_handle_ivar(block)
+                current_scope.ivars << ivar
+              end
+            when 'include', 'extend', 'prepend'
+              consume(:tIDENTIFIER, block)
+              const = handle_constant(block)
+              current_scope.mixins << [ident.to_sym, const]
+            else
+              consume(type_of(current), block)
+          end
+
+        else
+          consume(type_of(current), block)
       end
     end
 

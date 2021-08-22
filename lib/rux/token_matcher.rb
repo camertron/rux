@@ -64,11 +64,23 @@ module Rux
       until @queue.size >= LOOKAHEAD
         begin
           cur_token = @lexer.advance
-        rescue NoMethodError
-          # Internal lexer errors can happen since we're asking the ruby lexer
-          # to start at an arbitrary position inside the source buffer. It may
-          # encounter foreign rux tokens it's not expecting, etc. Best to stop
-          # trying to look ahead and call it quits.
+        rescue NoMethodError, AnnotationLexer::UnexpectedTokenError
+          # Rescue NoMethodErrors because we're asking the ruby lexer (from the
+          # Parser gem) to start at an arbitrary position inside the source
+          # buffer. It may encounter foreign rux tokens it's not expecting, etc.
+          # Best to stop trying to look ahead and call it quits.
+          #
+          # Rescue UnexpectedTokenErrors from the AnnotationLexer for similar
+          # reasons. Imagine a string of Rux code that contains a Ruby keyword
+          # in one of its literals, eg: <Hello>abc {foo} def {bar}</Hello>. The
+          # "def" is a Ruby keyword but not a valid method definition. The
+          # annotation lexer will choke when it tries to consume the method name,
+          # which doesn't exist. This normally wouldn't be a problem since the
+          # lexer chain should stop lexing Ruby code when it encounters the
+          # closing curly, but the naïve lookahead logic here in TokenMatcher
+          # doesn't have any way of knowing where to stop. Instead we rescue and
+          # stop trying to look ahead in the hopes that another lexer further up
+          # the chain knows what to do.
           break
         end
 

@@ -5,15 +5,6 @@ module Rux
     class UnexpectedTokenError < StandardError; end
     class TagMismatchError < StandardError; end
 
-    class ParseResult
-      attr_reader :ast, :context
-
-      def initialize(ast, context)
-        @ast = ast
-        @context = context
-      end
-    end
-
     class << self
       def parse(buffer)
         lexer = ::Rux::Lexer.new(buffer)

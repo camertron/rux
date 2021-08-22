@@ -1,4 +1,8 @@
 module Rux
+  # This the root of the lexer hierarchy. It yields a clean stream of Ruby and
+  # Rux tokens with imports, annotations, etc removed. Lexers further down the
+  # hierarchy should use the context object to store intermediate values like
+  # import maps and annotation information.
   class Lexer
     class EOFError < StandardError; end
     class TransitionError < StandardError; end
