@@ -14,7 +14,8 @@ end
 
 require 'cgi'
 require 'parser/current'
-require 'unparser'
+
+require 'ext/unparser'
 
 module Rux
   autoload :Annotations,       'rux/annotations'

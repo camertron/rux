@@ -135,16 +135,16 @@ module Rux
       ivar = IVar.new(name, type, modifiers.map { |m| text_of(m) })
 
       if ivar.attr?
-        block.call([:tSYMBOL, [ivar.symbol, pos_of(ivar_token)]])
+        block.call([:tSYMBOL, [ivar.bare_name, pos_of(ivar_token)]])
       end
 
       ivar.attrs.each do |attr|
         if attr.private?
           fabricate_and_yield(block, [
-            [:tNL, "\n"],
+            [:tNL, nil],
             [:tIDENTIFIER, 'private'],
             [:tLPAREN2, '('],
-            [:tSYMBOL, attr.method_sym],
+            [:tSYMBOL, attr.method_str],
             [:tRPAREN, ')']
           ])
         end

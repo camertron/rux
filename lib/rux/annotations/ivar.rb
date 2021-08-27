@@ -30,7 +30,11 @@ module Rux
       end
 
       def method_sym
-        sym(ivar.bare_name)
+        sym(method_str)
+      end
+
+      def method_str
+        ivar.bare_name
       end
     end
 
@@ -44,7 +48,11 @@ module Rux
       end
 
       def method_sym
-        sym("#{ivar.bare_name}=")
+        sym(method_str)
+      end
+
+      def method_str
+        "#{ivar.bare_name}="
       end
     end
 
