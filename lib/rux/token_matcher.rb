@@ -64,7 +64,7 @@ module Rux
       until @queue.size >= LOOKAHEAD
         begin
           cur_token = @lexer.advance
-        rescue NoMethodError, AnnotationLexer::UnexpectedTokenError
+        rescue NoMethodError, AnnotationLexer::UnexpectedTokenError => e
           # Rescue NoMethodErrors because we're asking the ruby lexer (from the
           # Parser gem) to start at an arbitrary position inside the source
           # buffer. It may encounter foreign rux tokens it's not expecting, etc.
@@ -81,6 +81,9 @@ module Rux
           # doesn't have any way of knowing where to stop. Instead we rescue and
           # stop trying to look ahead in the hopes that another lexer further up
           # the chain knows what to do.
+
+          puts e.inspect
+          puts e.backtrace.join("\n")
           break
         end
 

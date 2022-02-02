@@ -11,12 +11,20 @@ module Rux
         indent("#{sig}\n#{kind} #{sym(ivar.bare_name)}", level)
       end
 
+      def to_rbs(level)
+        indent("#{ivar.name}: #{ivar.type.sig}", level)
+      end
+
       def private?
         ivar.private?
       end
 
       def public?
         ivar.public?
+      end
+
+      def accept(visitor, level)
+        visitor.visit_attr(self, level)
       end
     end
 
@@ -73,14 +81,6 @@ module Rux
         sym(bare_name)
       end
 
-      def sig
-        "T.nilable(#{type.sig})"
-      end
-
-      def to_rbi(level)
-        indent("#{name} = T.let(nil, #{sig})", level)
-      end
-
       def attr?
         !attrs.empty?
       end
@@ -103,6 +103,10 @@ module Rux
 
       def public?
         modifiers.include?('public')
+      end
+
+      def accept(visitor, level)
+        visitor.visit_ivar(self, level)
       end
     end
   end

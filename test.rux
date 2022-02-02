@@ -1,0 +1,12 @@
+<h1>
+  <br />
+  <p>
+    <span>
+      { some_func }
+      { render(FooComponent.new) { |component,|
+  ("abc")
+} }
+    </span>
+  </p>
+</h1>
+

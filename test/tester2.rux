@@ -1,0 +1,29 @@
+# typed: true
+
+module Foo
+  class TestComponent[K, V] < ViewComponent::Base
+    prepend Boo
+    include Bar
+    extend Baz
+
+    def initialize(title: Array[Numeric], thing: Hash[T, String | Numeric]) -> nil
+      @title = title
+      @thing = thing
+    end
+
+    def each(&block: Proc[[String, String], String]) -> nil
+    end
+
+    def render -> String
+      <MyAwesomeForm className="form">
+        <div class="form-section" data-track="foo" title={@title}>
+          {5.times.map do
+            <Button>Submit {@thing}</Button>
+          end}
+          <Button>Cancel</Button>
+        </div>
+        <Foo>bar</Foo>
+      </MyAwesomeForm>
+    end
+  end
+end

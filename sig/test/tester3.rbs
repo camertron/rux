@@ -1,0 +1,7 @@
+class Phone
+  def initialize: (country: String, number: String) -> void
+  def ==: (other: untyped) -> void
+end
+
+
+def hash: () -> Numeric

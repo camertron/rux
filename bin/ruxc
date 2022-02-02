@@ -4,6 +4,7 @@ $:.push(File.expand_path('./lib'))
 
 require 'pathname'
 require 'optparse'
+require 'fileutils'
 require 'rux'
 
 class RuxCLI
@@ -27,7 +28,7 @@ class RuxCLI
       opts.banner = "Usage: ruxc path [options]"
 
       oneline(<<~DESC).tap do |desc|
-        Generate RBI files from rux type annotations (default: #{options[:annotations_enabled]}).
+        Generate RBS files from rux type annotations (default: #{options[:annotations_enabled]}).
       DESC
         opts.on('-a', '--[no-]annotations', desc) do |annotations|
           options[:annotations_enabled] = annotations
@@ -35,7 +36,7 @@ class RuxCLI
       end
 
       oneline(<<~DESC).tap do |desc|
-        Write RBI files to this directory (default: #{options[:annotations_path]}).
+        Write RBS files to this directory (default: #{options[:annotations_path]}).
       DESC
         opts.on('-dDIR', '--annotations-path=DIR', desc) do |annotations_path|
           options[:annotations_path] = annotations_path
@@ -85,12 +86,12 @@ class RuxCLI
     files.each do |file|
       ruby_file = file.sub_ext('.rb')
 
-      rbi_file = if annotations_enabled?
+      annotation_file = if annotations_enabled?
         relative_file = ruby_file.relative_path_from(Dir.getwd)
-        annotations_path.join(relative_file).sub_ext('.rbi')
+        annotations_path.join(relative_file).sub_ext(".rbs")
       end
 
-      yield file.to_s, ruby_file.to_s, rbi_file.to_s
+      yield file.to_s, ruby_file.to_s, annotation_file.to_s
     end
   end
 
@@ -120,7 +121,7 @@ end
 cli = RuxCLI.parse(ARGV)
 cli.validate
 
-cli.each_file do |in_file, out_file, rbi_file|
+cli.each_file do |in_file, out_file, annotation_file|
   rux_file = Rux::File.new(in_file)
   ruby_code, context = rux_file.to_ruby
 
@@ -137,7 +138,11 @@ cli.each_file do |in_file, out_file, rbi_file|
   end
 
   if cli.annotations_enabled?
-    ::File.write(rbi_file, context[:annotations].to_rbi)
-    puts "Wrote #{rbi_file}"
+    visitor = Rux::Annotations::RBSVisitor.new
+    annotations = visitor.visit(context[:annotations], 0)
+
+    FileUtils.mkdir_p(File.dirname(annotation_file))
+    ::File.write(annotation_file, annotations)
+    puts "Wrote #{annotation_file}"
   end
 end

@@ -8,6 +8,10 @@ module Rux
           result << indent("end\n", level)
         end
       end
+
+      def accept(visitor, level)
+        visitor.visit_module_def(self, level)
+      end
     end
   end
 end

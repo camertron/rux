@@ -7,11 +7,12 @@ module Rux
         super('(toplevel)')
       end
 
-      def to_rbi
-        ''.tap do |result|
-          result << "# typed: #{type_sigil}\n\n" if type_sigil
-          result << super(0)
-        end
+      def accept(visitor, level)
+        visitor.visit_top_level_scope(self, level)
+      end
+
+      def top_level_scope?
+        true
       end
     end
   end

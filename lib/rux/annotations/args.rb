@@ -18,6 +18,10 @@ module Rux
       def empty?
         args.empty?
       end
+
+      def accept(visitor, level)
+        visitor.visit_args(self, level)
+      end
     end
   end
 end

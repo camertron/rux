@@ -82,7 +82,7 @@ module Rux
           current_scope.methods << mtd
           push_scope(mtd)
         when :kEND
-          pop_scope
+          pop_scope unless current_scope.top_level_scope?
           consume(:kEND, block)
         when :tIDENTIFIER
           ident = text_of(current)
@@ -183,7 +183,10 @@ module Rux
     def handle_def(block)
       consume(:kDEF, block)
       method_name = text_of(current)
-      consume(:tIDENTIFIER, block)
+      # The method name is usually a tIDENTIFIER but can be almost anything, including
+      # things like tEQ (i.e. as in `def ==(other); end`), etc. We just sorta have to
+      # trust that whatever comes after the `def` is the method name “¯\_(ツ)_/¯“
+      consume(type_of(current), block)
       args = []
 
       if type_of(current) == :tLPAREN2
@@ -200,11 +203,14 @@ module Rux
     end
 
     def handle_args(block)
+      in_kwargs = false
+
       [].tap do |args|
         loop do
-          if type_of(current) == :tRPAREN
-            consume(:tRPAREN, block)
-            break
+          case type_of(current)
+            when :tRPAREN
+              consume(:tRPAREN, block)
+              break
           end
 
           args << handle_arg(block)
@@ -212,6 +218,36 @@ module Rux
           if type_of(current) == :tCOMMA
             consume(:tCOMMA, block)
           end
+        end
+      end
+    end
+
+    def handle_expression
+      parens = curlies = brackets = 0
+
+      [].tap do |tokens|
+        loop do
+          case type_of(current)
+            when :tLPAREN2
+              parens += 1
+            when :tRPAREN
+              parens -= 1
+            when :tLCURLY
+              curlies += 1
+            when :tRCURLY
+              curlies -= 1
+            when :tLBRACK
+              brackets += 1
+            when :tRBRACK
+              brackets -= 1
+            when :tNL
+              # TODO: handle line continuations using \
+              if parens == 0 && curlies == 0 && brackets == 0
+                break
+              end
+          end
+
+          tokens << current
         end
       end
     end
@@ -239,10 +275,23 @@ module Rux
           Type.new(:untyped)
       end
 
-      Arg.new(arg_name, arg_type, block_arg)
+      default_value = if type_of(current) == :tEQL
+        handle_expression
+      else
+        []
+      end
+
+      Arg.new(arg_name, arg_type, block_arg, default_value)
     end
 
     def handle_types
+      wrapped_in_parens = false
+
+      if type_of(current) == :tLPAREN2
+        consume(:tLPAREN2)
+        wrapped_in_parens = true
+      end
+
       if type_of(current) == :tLBRACK
         return handle_type_list
       end
@@ -259,6 +308,8 @@ module Rux
         end
       end
 
+      consume(:tRPAREN) if wrapped_in_parens
+
       # TODO: handle intersection types as well, maybe joined with a + or & char?
       if types.size > 1
         UnionType.new(types)
@@ -272,7 +323,12 @@ module Rux
     def handle_type
       if type_of(current) == :kNIL
         consume(:kNIL)
-        return nil
+        return NilType.instance
+      end
+
+      if type_of(current) == :tIDENTIFIER && text_of(current) == 'untyped'
+        consume(:tIDENTIFIER)
+        return UntypedType.instance
       end
 
       const = handle_constant

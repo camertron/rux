@@ -18,6 +18,14 @@ module Rux
         end
       end
 
+      def accept(visitor, level)
+        visitor.visit_method_def(self, level)
+      end
+
+      def top_level_scope?
+        false
+      end
+
       private
 
       def sig

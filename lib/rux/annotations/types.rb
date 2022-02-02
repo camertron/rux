@@ -1,3 +1,5 @@
+require 'singleton'
+
 module Rux
   module Annotations
     class Constant < Annotation
@@ -9,6 +11,10 @@ module Rux
 
       def to_ruby
         @ruby ||= tokens.map { |_, (text, _)| text }.join
+      end
+
+      def accept(visitor, level)
+        visitor.visit_constant(self, level)
       end
     end
 
@@ -35,6 +41,28 @@ module Rux
 
       def has_args?
         !args.empty?
+      end
+
+      def accept(visitor, level)
+        visitor.visit_type(self, level)
+      end
+    end
+
+
+    class NilType < Annotation
+      include Singleton
+
+      def accept(visitor, level)
+        visitor.visit_nil_type(self, level)
+      end
+    end
+
+
+    class UntypedType < Annotation
+      include Singleton
+
+      def accept(visitor, level)
+        visitor.visit_untyped_type(self, level)
       end
     end
 
@@ -66,6 +94,10 @@ module Rux
 
         result.join('.')
       end
+
+      def accept(visitor, level)
+        visitor.visit_proc_type(self, level)
+      end
     end
 
 
@@ -79,6 +111,10 @@ module Rux
       def sig
         "T::Array[#{elem_type.sig}]"
       end
+
+      def accept(visitor, level)
+        visitor.visit_array_type(self, level)
+      end
     end
 
 
@@ -91,6 +127,10 @@ module Rux
 
       def sig
         "T::Set[#{elem_type.sig}]"
+      end
+
+      def accept(visitor, level)
+        visitor.visit_set_type(self, level)
       end
     end
 
@@ -106,6 +146,10 @@ module Rux
       def sig
         "T::Hash[#{key_type.sig}, #{value_type.sig}]"
       end
+
+      def accept(visitor, level)
+        visitor.visit_hash_type(self, level)
+      end
     end
 
 
@@ -118,6 +162,10 @@ module Rux
 
       def sig
         "T::Range[#{elem_type.sig}]"
+      end
+
+      def accept(visitor, level)
+        visitor.visit_range_type(self, level)
       end
     end
 
@@ -132,6 +180,10 @@ module Rux
       def sig
         "T::Enumerable[#{elem_type.sig}]"
       end
+
+      def accept(visitor, level)
+        visitor.visit_enumerable_type(self, level)
+      end
     end
 
 
@@ -144,6 +196,10 @@ module Rux
 
       def sig
         "T::Enumerator[#{elem_type.sig}]"
+      end
+
+      def accept(visitor, level)
+        visitor.visit_enumerator_type(self, level)
       end
     end
 
@@ -158,12 +214,20 @@ module Rux
       def sig
         "T.class_of(#{type.sig})"
       end
+
+      def accept(visitor, level)
+        visitor.visit_class_of(self, level)
+      end
     end
 
 
     class SelfType
       def sig
         'T.self_type'
+      end
+
+      def accept(visitor, level)
+        visitor.visit_self_type(self, level)
       end
     end
   end

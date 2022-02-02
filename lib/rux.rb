@@ -1,4 +1,5 @@
 require 'stringio'
+require 'pry-byebug'
 
 # Racc uses LoadErrors for flow control and in certain ruby versions will
 # print one along with its stack trace when required. To avoid receiving a
@@ -53,15 +54,17 @@ module Rux
     def to_ruby(str, visitor: default_visitor)
       buffer = ::Parser::Source::Buffer.new('(source)', source: str)
       rux_ast, context = RuxParser.parse(buffer)
-      token_lexer = TokenLexer.new(rux_ast, buffer, visitor)
-      parser = RubyParser.new(token_lexer)
-      ruby_ast, comments = parser.parse(buffer)
-      rewriter = Imports::ImportRewriter.new(
-        buffer, context[:imports]
-      )
-      ruby_ast = rewriter.process(ruby_ast)
-      ruby_code, source_map = RubyUnparser.unparse(ruby_ast, comments, buffer)
-      context.merge!(source_map: source_map)
+      # token_lexer = TokenLexer.new(rux_ast, buffer, visitor)
+      # parser = RubyParser.new(token_lexer)
+      # ruby_ast, comments = parser.parse(buffer)
+      # rewriter = Imports::ImportRewriter.new(
+      #   buffer, context[:imports]
+      # )
+      # ruby_ast = rewriter.process(ruby_ast)
+      # ruby_code, source_map = RubyUnparser.unparse(ruby_ast, comments, buffer)
+      # context.merge!(source_map: source_map)
+
+      ruby_code = nil
       [ruby_code, context]
     end
 
@@ -78,7 +81,7 @@ module Rux
     end
 
     def default_annotations_path
-      @default_annotations_path ||= './sorbet/rbi'
+      @default_annotations_path ||= './sig'
     end
 
     def tag(tag_name, attributes = {}, &block)

@@ -1,0 +1,15 @@
+class FooComponent < ViewComponent::Base[T]
+  private attr_reader @people: Hash[String, String]
+
+  def initialize(people: Hash[String, String])
+    @people = people
+  end
+
+  def call -> String
+    <Hello>
+      <div class="foo">
+        Bar!
+      </div>
+    </Hello>
+  end
+end

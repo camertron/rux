@@ -10,6 +10,10 @@ module Rux
       def sig
         "T.any(#{types.map(&:sig).join(', ')})"
       end
+
+      def accept(visitor, level)
+        visitor.visit_union_type(self, level)
+      end
     end
   end
 end
