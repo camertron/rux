@@ -12,6 +12,10 @@ module Rux
       def accept(visitor)
         visitor.visit_text(self)
       end
+
+      def type
+        :text
+      end
     end
   end
 end

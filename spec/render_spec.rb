@@ -15,7 +15,7 @@ describe Rux do
       </div>
     RUBY
 
-    expect(result).to eq("<div> <p>Welcome!</p><p>Welcome!</p><p>Welcome!</p> </div>")
+    expect(result).to eq("<div><p>Welcome!</p><p>Welcome!</p><p>Welcome!</p></div>")
   end
 
   it 'handles rux tags inside ruby code' do
@@ -27,7 +27,7 @@ describe Rux do
       </div>
     RUBY
 
-    expect(result).to eq("<div> <p>Welcome!</p><p>Welcome!</p><p>Welcome!</p> </div>")
+    expect(result).to eq("<div><p>Welcome!</p><p>Welcome!</p><p>Welcome!</p></div>")
   end
 
   it 'correctly handles keyword arguments (ruby 3)' do

@@ -12,6 +12,10 @@ module Rux
       def accept(visitor)
         visitor.visit_tag(self)
       end
+
+      def type
+        :tag
+      end
     end
   end
 end

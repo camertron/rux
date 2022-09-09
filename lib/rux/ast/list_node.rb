@@ -10,6 +10,10 @@ module Rux
       def accept(visitor)
         visitor.visit_list(self)
       end
+
+      def type
+        :list
+      end
     end
   end
 end

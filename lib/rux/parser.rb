@@ -2,6 +2,8 @@ require 'parser'
 
 module Rux
   class Parser
+    WHITESPACE_SENSITIVE_TAGS = %w(textarea pre).freeze
+
     class UnexpectedTokenError < StandardError; end
     class TagMismatchError < StandardError; end
 
@@ -104,7 +106,7 @@ module Rux
 
       until is?(:tRUX_TAG_CLOSE_START)
         if is?(:tRUX_LITERAL, :tRUX_LITERAL_RUBY_CODE_START)
-          lit = literal
+          lit = literal(tag_name)
           tag_node.children << lit if lit
         else
           tag_node.children << tag
@@ -177,11 +179,16 @@ module Rux
       end
     end
 
-    def literal
+    def literal(tag_name)
       if is?(:tRUX_LITERAL_RUBY_CODE_START)
         literal_ruby_code
       else
-        lit = squeeze_lit(text_of(current))
+        lit = if WHITESPACE_SENSITIVE_TAGS.include?(tag_name)
+          text_of(current)
+        else
+          squeeze_lit(text_of(current))
+        end
+
         consume(:tRUX_LITERAL)
         AST::TextNode.new(lit) unless lit.empty?
       end

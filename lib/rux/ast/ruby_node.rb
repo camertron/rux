@@ -10,6 +10,10 @@ module Rux
       def accept(visitor)
         visitor.visit_ruby(self)
       end
+
+      def type
+        :ruby
+      end
     end
   end
 end
