@@ -189,8 +189,8 @@ module Rux
 
     def squeeze_lit(lit)
       lit
-        .sub(/\A\s+/) { |s| s.match?(/[\r\n]/) ? s.lstrip : s }
-        .sub(/\s+\z/) { |s| s.match?(/[\r\n]/) ? s.rstrip : s }
+        .sub(/\A\s+/) { |s| s.match?(/[\r\n]/) ? "" : s }
+        .sub(/\s+\z/) { |s| s.match?(/[\r\n]/) ? "" : s }
         .gsub(/\s+/, " ")
     end
 
