@@ -1,3 +1,6 @@
+# 1.1.0
+* Remove newlines between elements. (@aalin, #3)
+
 ## 1.0.3
 * Use modern AST format.
 * Switch back to unparser v0.6.
