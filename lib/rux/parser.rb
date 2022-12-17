@@ -188,7 +188,10 @@ module Rux
     end
 
     def squeeze_lit(lit)
-      lit.gsub(/\s/, ' ').squeeze(' ')
+      lit
+        .sub(/\A\s+/) { |s| s.match?(/[\r\n]/) ? "" : s }
+        .sub(/\s+\z/) { |s| s.match?(/[\r\n]/) ? "" : s }
+        .gsub(/\s+/, " ")
     end
 
     def literal_ruby_code
