@@ -1,3 +1,7 @@
+# 1.1.1
+* Don't slugify HTML attributes.
+  - Previously rux would emit `<div data-foo="bar">` as `<div data_foo="bar">` because it treated HTML attributes as if they were being passed as Ruby arguments, which don't allow dashes. If these arguments are passed to a component initializer, then they must be slugified, but HTML attributes shouldn't be affected.
+
 # 1.1.0
 * Remove newlines between elements. (@aalin, #3)
 

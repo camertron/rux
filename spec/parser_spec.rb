@@ -270,4 +270,22 @@ describe Rux::Parser do
       }
     RUBY
   end
+
+  it 'slugifies ruby arguments' do
+    code = <<~RUX
+      <Hello data-foo="bar" />
+    RUX
+    expect(compile(code)).to eq(<<~RUBY.strip)
+      render(Hello.new(data_foo: "bar"))
+    RUBY
+  end
+
+  it 'does not slugify HTML attributes' do
+    code = <<~RUX
+      <div data-foo="bar" />
+    RUX
+    expect(compile(code)).to eq(<<~RUBY.strip)
+      Rux.tag("div", { :"data-foo" => "bar" })
+    RUBY
+  end
 end

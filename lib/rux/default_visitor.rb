@@ -22,10 +22,10 @@ module Rux
 
         at = node.attrs.each_with_object([]) do |(k, v), ret|
           next if k == 'as'
-          ret << Utils.attr_to_hash_elem(k, visit(v))
+          ret << Utils.attr_to_hash_elem(k, visit(v), slugify: node.component?)
         end
 
-        if node.name.start_with?(/[A-Z]/)
+        if node.component?
           result << "render(#{node.name}.new"
 
           unless node.attrs.empty?
