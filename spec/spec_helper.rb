@@ -33,5 +33,15 @@ class ArgsComponent < ViewComponent::Base
   end
 end
 
+class DataComponent < ViewComponent::Base
+  def initialize(data_foo:)
+    @data_foo = data_foo
+  end
+
+  def call
+    "<div data-foo=\"#{@data_foo}\"></div>"
+  end
+end
+
 RSpec.configure do |config|
 end
