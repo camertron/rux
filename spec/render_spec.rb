@@ -63,4 +63,24 @@ describe Rux do
       "<div><p>Hello World</p><p>Hello World</p><p>Hello World</p><p>Hello World</p></div>"
     )
   end
+
+  it 'slugifies ruby arguments' do
+    result = render(<<~RUBY)
+      <DataComponent data-foo="foo" />
+    RUBY
+
+    expect(result).to eq(
+      "<div data-foo=\"foo\"></div>"
+    )
+  end
+
+  it 'does not slugify HTML attributes' do
+    result = render(<<~RUBY)
+      <div data-foo="bar"></div>
+    RUBY
+
+    expect(result).to eq(
+      "<div data-foo=\"bar\"></div>"
+    )
+  end
 end

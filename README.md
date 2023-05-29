@@ -170,13 +170,15 @@ end
 
 In other words, positional arguments are not allowed. This is because there's no such thing as a positional HTML attribute - all HTML attributes are key/value pairs. So, in order to match up with HTML, rux components are written with keyword arguments.
 
-Note also that the rux parser will replace dashes with underscores in rux tag attributes to adhere to both HTML and Ruby syntax conventions, since HTML attributes use dashes while Ruby keyword arguments use underscores. For example, here's how to write a rux tag for `MyComponent` above:
+Note also that the rux parser will replace dashes with underscores in component tag attributes to adhere to both HTML and Ruby syntax conventions, since HTML attributes use dashes while Ruby keyword arguments use underscores. For example, here's how to write a rux tag for `MyComponent` above:
 
 ```ruby
 <MyComponent first-name="Homer" last-name="Simpson" />
 ```
 
 Notice that the rux attribute "first-name" is passed to `MyComponent#initialize` as "first_name".
+
+Attributes on regular tags, i.e. non-component tags like `<div>` and `<span>`, are not modified. In other words, `<div data-foo="foo">` does _not_ become `<div data_foo="foo">` because that would be very annoying.
 
 ## How it Works
 
