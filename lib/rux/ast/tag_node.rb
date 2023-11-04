@@ -16,6 +16,14 @@ module Rux
       def component?
         name.start_with?(/[A-Z]/)
       end
+
+      def slot_component?
+        name.start_with?("With")
+      end
+
+      def slot_method
+        @slot_method ||= name.gsub(/(?<!^)([A-Z])/) { |x| "_#{x}" }.downcase
+      end
     end
   end
 end

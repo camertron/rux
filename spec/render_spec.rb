@@ -83,4 +83,21 @@ describe Rux do
       "<div data-foo=\"bar\"></div>"
     )
   end
+
+  it 'works with slots' do
+    result = render(<<~RUBY)
+      <TableComponent>
+        <WithRow>
+          <WithColumn>Foo 1</WithColumn>
+        </WithRow>
+        <WithRow>
+          <WithColumn>Foo 2</WithColumn>
+        </WithRow>
+      </TableComponent>
+    RUBY
+
+    expect(result).to eq(
+      "<table><tr><td>Foo 1</td></tr><tr><td>Foo 2</td></tr></table>"
+    )
+  end
 end

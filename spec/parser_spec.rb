@@ -21,7 +21,7 @@ describe Rux::Parser do
 
   it 'handles a single tag with a text body' do
     expect(compile("<Hello>foo</Hello>")).to eq(<<~RUBY.strip)
-      render(Hello.new) {
+      render(Hello.new) { |rux_block_arg0|
         "foo"
       }
     RUBY
@@ -95,7 +95,7 @@ describe Rux::Parser do
 
   it 'handles simple ruby statements in tag bodies' do
     expect(compile('<Hello>{"foo"}</Hello>')).to eq(<<~RUBY.strip)
-      render(Hello.new) {
+      render(Hello.new) { |rux_block_arg0|
         "foo"
       }
     RUBY
@@ -103,7 +103,7 @@ describe Rux::Parser do
 
   it 'handles tag bodies containing ruby code with curly braces' do
     expect(compile('<Hello>{[1, 2, 3].map { |n| n * 2 }.join(", ")}</Hello>')).to eq(<<~RUBY.strip)
-      render(Hello.new) {
+      render(Hello.new) { |rux_block_arg0|
         [1, 2, 3].map { |n|
           n * 2
         }.join(", ")
@@ -113,7 +113,7 @@ describe Rux::Parser do
 
   it 'handles tag bodies with intermixed text and ruby code' do
     expect(compile('<Hello>abc {foo} def {bar} baz</Hello>')).to eq(<<~RUBY.strip)
-      render(Hello.new) {
+      render(Hello.new) { |rux_block_arg0|
         Rux.create_buffer.tap { |_rux_buf_|
           _rux_buf_ << "abc "
           _rux_buf_ << foo
@@ -135,9 +135,9 @@ describe Rux::Parser do
     RUX
 
     expect(compile(rux_code)).to eq(<<~RUBY.strip)
-      render(Outer.new) {
+      render(Outer.new) { |rux_block_arg0|
         5.times.map {
-          render(Inner.new) {
+          render(Inner.new) { |rux_block_arg1|
             Rux.create_buffer.tap { |_rux_buf_|
               _rux_buf_ << "What a "
               _rux_buf_ << @thing
@@ -189,7 +189,7 @@ describe Rux::Parser do
     RUX
 
     expect(compile(rux_code)).to eq(<<~RUBY.strip)
-      render(Outer.new) {
+      render(Outer.new) { |rux_block_arg0|
         5.times.map {
           Rux.tag("div") {
             Rux.create_buffer.tap { |_rux_buf_|
@@ -204,7 +204,7 @@ describe Rux::Parser do
 
   it 'escapes HTML entities in strings' do
     expect(compile('<Hello>"foo"</Hello>')).to eq(<<~RUBY.strip)
-      render(Hello.new) {
+      render(Hello.new) { |rux_block_arg0|
         "&quot;foo&quot;"
       }
     RUBY
@@ -232,7 +232,7 @@ describe Rux::Parser do
 
   it 'emits handles spaces between adjacent ruby code snippets' do
     expect(compile("<Hello>{first} {second}</Hello>")).to eq(<<~RUBY.strip)
-      render(Hello.new) {
+      render(Hello.new) { |rux_block_arg0|
         Rux.create_buffer.tap { |_rux_buf_|
           _rux_buf_ << first
           _rux_buf_ << " "
@@ -250,16 +250,16 @@ describe Rux::Parser do
       </Hello>
     RUX
     expect(compile(code)).to eq(<<~RUBY.strip)
-      render(Hello.new) {
+      render(Hello.new) { |rux_block_arg0|
         Rux.create_buffer.tap { |_rux_buf_|
-          _rux_buf_ << render(Hola.new) {
+          _rux_buf_ << render(Hola.new) { |rux_block_arg1|
             Rux.create_buffer.tap { |_rux_buf_|
               _rux_buf_ << first
               _rux_buf_ << " "
               _rux_buf_ << second
             }.to_s
           }
-          _rux_buf_ << render(Hola.new) {
+          _rux_buf_ << render(Hola.new) { |rux_block_arg1|
             Rux.create_buffer.tap { |_rux_buf_|
               _rux_buf_ << first
               _rux_buf_ << " "
@@ -286,6 +286,35 @@ describe Rux::Parser do
     RUX
     expect(compile(code)).to eq(<<~RUBY.strip)
       Rux.tag("div", { :"data-foo" => "bar" })
+    RUBY
+  end
+
+  it 'works with slots' do
+    code = <<~RUX
+      <TableComponent>
+        <WithRow>
+          <WithColumn>Foo 1</WithColumn>
+        </WithRow>
+        <WithRow>
+          <WithColumn>Foo 2</WithColumn>
+        </WithRow>
+      </TableComponent>
+    RUX
+    expect(compile(code)).to eq(<<~RUBY.strip)
+      render(TableComponent.new) { |rux_block_arg0|
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_ << rux_block_arg0.with_row { |rux_block_arg1|
+            rux_block_arg1.with_column { |rux_block_arg2|
+              "Foo 1"
+            }
+          }
+          _rux_buf_ << rux_block_arg0.with_row { |rux_block_arg1|
+            rux_block_arg1.with_column { |rux_block_arg2|
+              "Foo 2"
+            }
+          }
+        }.to_s
+      }
     RUBY
   end
 end
