@@ -148,6 +148,74 @@ end
 
 Notice we were able to embed Ruby within rux within Ruby within rux. Within Ruby. The rux parser supports unlimited levels of nesting, although you'll probably not want to go _too_ crazy.
 
+## Slots
+
+Rux fully supports the view_component gem's [slots feature](https://viewcomponent.org/guide/slots.html), which allows a component to expose specific points in the rendered output where the caller can provide their own content. Let's look at a table component that exposes rows and columns via slots:
+
+```ruby
+class TableComponent < ViewComponent::Base
+  renders_many :rows, RowComponent
+
+  def call
+    <table>
+      {rows.each do |row|
+        <>{row}</>
+      end}
+    </table>
+  end
+end
+
+class RowComponent < ViewComponent::Base
+  renders_many :columns, ColumnComponent
+
+  def call
+    <tr>
+      {columns.each do |column|
+        <>{column}</>
+      end}
+    </tr>
+  end
+end
+
+class ColumnComponent < ViewComponent::Base
+  def call
+    <td>{content}</td>
+  end
+end
+```
+
+Notice the use of rux fragments (analogous to JSX fragments) via the `<></>` syntax. This allows emitting a slot by dropping back to ruby via rux.
+
+The `TableComponent` might be rendered in an ERB template like so:
+
+```erb
+<%= render(TableComponent.new) do |table| %>
+  <% table.with_row do |row| %>
+    <% row.with_column { "Row 1, Col 1" } %>
+    <% row.with_column { "Row 1, Col 2" } %>
+  <% end %>
+  <% table.with_row do |row| %>
+    <% row.with_column { "Row 2, Col 1" } %>
+    <% row.with_column { "Row 2, Col 2" } %>
+  <% end %>
+<% end %>
+```
+
+Notice the slots are "filled in" using the `#with_row` and `#with_column` methods. In rux, these methods become components:
+
+```ruby
+<TableComponent>
+  <WithRow>
+    <WithColumn>Row 1, Col 1</WithColumn>
+    <WithColumn>Row 1, Col 2</WithColumn>
+  </WithRow>
+  <WithRow>
+    <WithColumn>Row 2, Col 1</WithColumn>
+    <WithColumn>Row 2, Col 2</WithColumn>
+  </WithRow>
+</TableComponent>
+```
+
 ## Keyword Arguments Only
 
 Any view component that will be rendered by rux must _only_ accept keyword arguments in its constructor. For example:
