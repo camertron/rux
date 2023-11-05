@@ -95,7 +95,8 @@ module Rux
       attrs = attributes
       maybe_consume(:tRUX_ATTRIBUTE_SPACES)
       maybe_consume(:tRUX_TAG_OPEN_END)
-      tag_node = AST::TagNode.new(tag_name, attrs)
+      tag_node = AST::TagNode.new(tag_name, attrs, tag_pos)
+      attrs.each { |attr_node| attr_node.tag_node = tag_node }
 
       if is?(:tRUX_TAG_SELF_CLOSING_END)
         consume(:tRUX_TAG_SELF_CLOSING_END)
@@ -138,40 +139,74 @@ module Rux
     end
 
     def attributes
-      {}.tap do |attrs|
-        while is?(:tRUX_ATTRIBUTE_NAME)
-          key, value = attribute
-          attrs[key] = value
+      pos = pos_of(current)
 
+      attrs = [].tap do |attrs|
+        while is?(:tRUX_ATTRIBUTE_NAME)
+          attrs << attribute
           maybe_consume(:tRUX_ATTRIBUTE_SPACES)
         end
       end
+
+      AST::AttrsNode.new(attrs, pos)
     end
 
     def attribute
       maybe_consume(:tRUX_ATTRIBUTE_SPACES)
       attr_name = text_of(current)
+      attr_pos = pos_of(current)
       consume(:tRUX_ATTRIBUTE_NAME)
       maybe_consume(:tRUX_ATTRIBUTE_EQUALS_SPACES)
 
       attr_value = if maybe_consume(:tRUX_ATTRIBUTE_EQUALS)
         maybe_consume(:tRUX_ATTRIBUTE_VALUE_SPACES)
-        attribute_value
+        attribute_value.tap do
+          maybe_consume(:tRUX_ATTRIBUTE_VALUE_SPACES)
+        end
       else
         # if no equals sign, assume boolean attribute
-        AST::StringNode.new("\"true\"")
+        AST::StringNode.new('true', :none, nil)
       end
 
-      [attr_name, attr_value]
+      AST::AttrNode.new(attr_name, attr_value, attr_pos)
     end
 
     def attribute_value
       if is?(:tRUX_ATTRIBUTE_VALUE_RUBY_CODE_START)
         attr_ruby_code
       else
-        AST::StringNode.new(text_of(current)).tap do
-          consume(:tRUX_ATTRIBUTE_VALUE)
+        case type_of(current)
+          when :tRUX_ATTRIBUTE_VALUE_DQ_START
+            attribute_value_dq
+          when :tRUX_ATTRIBUTE_VALUE_SQ_START
+            attribute_value_sq
+          when :tRUX_ATTRIBUTE_UQ_VALUE
+            attribute_value_uq
         end
+      end
+    end
+
+    def attribute_value_dq
+      consume(:tRUX_ATTRIBUTE_VALUE_DQ_START)
+
+      AST::StringNode.new(text_of(current), :double, pos_of(current)).tap do
+        consume(:tRUX_ATTRIBUTE_DQ_VALUE)
+        consume(:tRUX_ATTRIBUTE_VALUE_DQ_END)
+      end
+    end
+
+    def attribute_value_sq
+      consume(:tRUX_ATTRIBUTE_VALUE_SQ_START)
+
+      AST::StringNode.new(text_of(current), :single, pos_of(current)).tap do
+        consume(:tRUX_ATTRIBUTE_SQ_VALUE)
+        consume(:tRUX_ATTRIBUTE_VALUE_SQ_END)
+      end
+    end
+
+    def attribute_value_uq
+      AST::StringNode.new(text_of(current), :none, pos_of(current)).tap do
+        consume(:tRUX_ATTRIBUTE_UQ_VALUE)
       end
     end
 
@@ -201,8 +236,9 @@ module Rux
         literal_ruby_code
       else
         lit = squeeze_lit(text_of(current))
+        pos = pos_of(current)
         consume(:tRUX_LITERAL)
-        AST::TextNode.new(lit) unless lit.empty?
+        AST::TextNode.new(lit, pos) unless lit.empty?
       end
     end
 

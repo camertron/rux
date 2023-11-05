@@ -5,8 +5,9 @@ module Rux
     class TextNode
       attr_reader :text
 
-      def initialize(text)
+      def initialize(text, pos)
         @text = text
+        @pos = pos
       end
 
       def accept(visitor)

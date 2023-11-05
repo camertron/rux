@@ -3,9 +3,10 @@ module Rux
     class TagNode
       attr_reader :name, :attrs, :children
 
-      def initialize(name, attrs)
+      def initialize(name, attrs, pos)
         @name = name
         @attrs = attrs
+        @pos = pos
         @children = []
       end
 

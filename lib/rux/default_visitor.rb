@@ -15,33 +15,33 @@ module Rux
     end
 
     def visit_string(node)
-      node.str
+      case node.quote_type
+        when :single
+          "'#{node.str}'"
+        else
+          "\"#{node.str}\""
+      end
     end
 
     def visit_tag(node)
       ''.tap do |result|
-        block_arg = if (as = node.attrs['as'])
+        block_arg = if (as = node.attrs.get('as'))
           visit(as)
         end
 
         block_arg ||= "rux_block_arg#{@render_stack.size}"
 
-        at = node.attrs.each_with_object([]) do |(k, v), ret|
-          next if k == 'as'
-          ret << Utils.attr_to_hash_elem(k, visit(v), slugify: node.component?)
-        end
-
         if node.slot_component?
           result << "#{parent_render[:block_arg]}.#{node.slot_method}"
 
           unless node.attrs.empty?
-            result << "(#{at.join(', ')})"
+            result << "(#{visit(node.attrs)})"
           end
         elsif node.component?
           result << "render(#{node.name}.new"
 
           unless node.attrs.empty?
-            result << "(#{at.join(', ')})"
+            result << "(#{visit(node.attrs)})"
           end
 
           result << ')'
@@ -49,7 +49,7 @@ module Rux
           result << "Rux.tag('#{node.name}'"
 
           unless node.attrs.empty?
-            result << ", { #{at.join(', ')} }"
+            result << ", { #{visit(node.attrs)} }"
           end
 
           result << ')'
@@ -79,6 +79,18 @@ module Rux
 
         @render_stack.pop
       end
+    end
+
+    def visit_attrs(node)
+      visited_attrs = node.attrs.each_with_object([]) do |attr, memo|
+        memo << visit(attr) unless attr.name == "as"
+      end
+
+      visited_attrs.join(", ")
+    end
+
+    def visit_attr(node)
+      Utils.attr_to_hash_elem(node.name, visit(node.value), slugify: node.tag_node.component?)
     end
 
     def visit_fragment(node)
