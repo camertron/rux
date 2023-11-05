@@ -46,6 +46,8 @@ module Rux
           children << rb
         elsif type_of(current) == :tRUX_TAG_OPEN_START
           children << tag
+        elsif type_of(current) == :tRUX_FRAGMENT_OPEN
+          children << fragment
         else
           raise UnexpectedTokenError,
             'expected ruby code or the start of a rux tag but found '\
@@ -103,12 +105,7 @@ module Rux
       @stack.push(tag_name)
 
       until is?(:tRUX_TAG_CLOSE_START)
-        if is?(:tRUX_LITERAL, :tRUX_LITERAL_RUBY_CODE_START)
-          lit = literal
-          tag_node.children << lit if lit
-        else
-          tag_node.children << tag
-        end
+        populate_next_child(tag_node)
       end
 
       consume(:tRUX_TAG_CLOSE_START)
@@ -129,6 +126,15 @@ module Rux
       consume(:tRUX_TAG_CLOSE_END)
 
       tag_node
+    end
+
+    def populate_next_child(node)
+      if is?(:tRUX_LITERAL, :tRUX_LITERAL_RUBY_CODE_START)
+        lit = literal
+        node.children << lit if lit
+      else
+        node.children << tag
+      end
     end
 
     def attributes
@@ -174,6 +180,19 @@ module Rux
 
       ruby.tap do
         consume(:tRUX_ATTRIBUTE_VALUE_RUBY_CODE_END)
+      end
+    end
+
+    def fragment
+      consume(:tRUX_FRAGMENT_OPEN)
+
+      AST::FragmentNode.new.tap do |fragment_node|
+        until is?(:tRUX_TAG_CLOSE_START)
+          populate_next_child(fragment_node)
+        end
+
+        consume(:tRUX_TAG_CLOSE_START)
+        consume(:tRUX_FRAGMENT_CLOSE)
       end
     end
 

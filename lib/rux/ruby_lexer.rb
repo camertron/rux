@@ -117,6 +117,7 @@ module Rux
 
     def at_lt?
       is?(@rux_token_queue[1], :tLT) && (
+        is?(@rux_token_queue[2], :tGT) ||
         is?(@rux_token_queue[2], :tCONSTANT) ||
         is?(@rux_token_queue[2], :tIDENTIFIER)
       )

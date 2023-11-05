@@ -81,6 +81,18 @@ module Rux
       end
     end
 
+    def visit_fragment(node)
+      ''.tap do |result|
+        result << "Rux.create_buffer.tap { |_rux_buf_| "
+
+        node.children.each do |child|
+          result << "_rux_buf_ << #{visit(child).strip};"
+        end
+
+        result << " }.to_s"
+      end
+    end
+
     def visit_text(node)
       "\"#{CGI.escape_html(node.text)}\""
     end

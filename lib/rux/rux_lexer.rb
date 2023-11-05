@@ -87,11 +87,13 @@ module Rux
         case state
           when :tRUX_TAG_OPEN, :tRUX_TAG_SELF_CLOSING
             tag_stack.push(text)
+          when :tRUX_FRAGMENT_OPEN
+            tag_stack.push(:__fragment)
           when :tRUX_TAG_CLOSE
             tag_stack.pop
           when :tRUX_TAG_CLOSE_END
             break if tag_stack.empty?
-          when :tRUX_TAG_SELF_CLOSING_END
+          when :tRUX_TAG_SELF_CLOSING_END, :tRUX_FRAGMENT_CLOSE
             tag_stack.pop
             break if tag_stack.empty?
         end

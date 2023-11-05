@@ -1,6 +1,5 @@
 require 'rspec'
 require 'rux'
-require 'pry-byebug'
 
 # a very basic implementation of the view_component lib
 module ViewComponent

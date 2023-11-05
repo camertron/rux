@@ -289,7 +289,7 @@ describe Rux::Parser do
     RUBY
   end
 
-  it 'works with slots' do
+  it 'correctly transforms slot components into slot methods' do
     code = <<~RUX
       <TableComponent>
         <WithRow>
@@ -315,6 +315,25 @@ describe Rux::Parser do
           }
         }.to_s
       }
+    RUBY
+  end
+
+  it 'allows fragments' do
+    code = <<~RUX
+      <>
+        <div>Foo 1</div>
+        <div>Foo 2</div>
+      </>
+    RUX
+    expect(compile(code)).to eq(<<~RUBY.strip)
+      Rux.create_buffer.tap { |_rux_buf_|
+        _rux_buf_ << Rux.tag("div") {
+          "Foo 1"
+        }
+        _rux_buf_ << Rux.tag("div") {
+          "Foo 2"
+        }
+      }.to_s
     RUBY
   end
 end

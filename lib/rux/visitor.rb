@@ -20,6 +20,10 @@ module Rux
       visit_children(node)
     end
 
+    def visit_fragment(node)
+      visit_children(node)
+    end
+
     def visit_text(node)
       visit_children(node)
     end
