@@ -1,9 +1,12 @@
 require 'spec_helper'
 
 describe Rux do
-  def render(rux_code)
+  def render(rux_code, **kwargs)
     ruby_code = Rux.to_ruby(rux_code)
-    ViewComponent::Base.new.instance_eval(ruby_code)
+    # puts ruby_code
+    ViewComponent::Base.new.instance_exec(ruby_code, **kwargs) do |ruby_code, **kwargs|
+      eval(ruby_code)
+    end
   end
 
   it 'handles a HTML tags inside ruby code' do
@@ -84,7 +87,7 @@ describe Rux do
     )
   end
 
-  it 'works with slots' do
+  it 'renders slots correctly' do
     result = render(<<~RUBY)
       <TableComponent>
         <WithRow>
@@ -98,6 +101,37 @@ describe Rux do
 
     expect(result).to eq(
       "<table><tr><td>Foo 1</td></tr><tr><td>Foo 2</td></tr></table>"
+    )
+  end
+
+  it 'calls .to_s on anything appended to a buffer' do
+    result = render(<<~RUBY)
+      <div>
+        {[["foo", "bar"], ["baz", "boo"]].map do |row|
+          <>{row}</>
+        end}
+      </div>
+    RUBY
+    expect(result).to eq(
+      '<div>foobarbazboo</div>'
+    )
+  end
+
+  it 'escapes arbitrary ruby expressions' do
+    result = render(<<~RUBY, value: "<p>Foo</p>")
+      <div>{kwargs[:value]}</div>
+    RUBY
+    expect(result).to eq(
+      "<div>&lt;p&gt;Foo&lt;/p&gt;</div>"
+    )
+  end
+
+  it 'escapes double quotes in HTML attributes' do
+    result = render(<<~RUBY)
+      <div class={'"foo"'}>foo</div>
+    RUBY
+    expect(result).to eq(
+      "<div class=\"&quot;foo&quot;\">foo</div>"
     )
   end
 end

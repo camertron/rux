@@ -14,8 +14,8 @@ class RuxCLI
     end
 
     options = {
-      recursive: false,
-      pretty: true
+      pretty: true,
+      stdout: false
     }
 
     if argv.first != '-h' && argv.first != '--help'
@@ -30,6 +30,14 @@ class RuxCLI
       DESC
         opts.on('-p', '--[no-]pretty', desc) do |pretty|
           options[:pretty] = pretty
+        end
+      end
+
+      oneline(<<~DESC).tap do |desc|
+        Print results to STDOUT instead of writing files to disk.
+      DESC
+        opts.on('-o', '--stdout', desc) do |stdout|
+          options[:stdout] = stdout
         end
       end
 
@@ -79,6 +87,10 @@ class RuxCLI
     @options[:pretty]
   end
 
+  def write_to_stdout?
+    @options[:stdout]
+  end
+
   private
 
   def directory?
@@ -91,6 +103,11 @@ cli.validate
 
 cli.each_file do |in_file, out_file, rbi_file|
   rux_file = Rux::File.new(in_file)
-  rux_file.write(out_file, pretty: cli.pretty?)
-  puts "Wrote #{out_file}"
+
+  if cli.write_to_stdout?
+    puts rux_file.to_ruby(pretty: cli.pretty?)
+  else
+    rux_file.write(out_file, pretty: cli.pretty?)
+    puts "Wrote #{out_file}"
+  end
 end

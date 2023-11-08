@@ -6,8 +6,14 @@ module Rux
       @render_stack = []
     end
 
+    def visit_root(node)
+      visit_list(node.list)
+    end
+
     def visit_list(node)
-      node.children.map { |child| visit(child) }.join
+      ''.tap do |result|
+        node.children.each { |child| result << visit(child) }
+      end
     end
 
     def visit_ruby(node)
@@ -32,7 +38,7 @@ module Rux
         block_arg ||= "rux_block_arg#{@render_stack.size}"
 
         if node.slot_component?
-          result << "#{parent_render[:block_arg]}.#{node.slot_method}"
+          result << "(#{parent_render[:block_arg]}.#{node.slot_method}"
 
           unless node.attrs.empty?
             result << "(#{visit(node.attrs)})"
@@ -60,24 +66,33 @@ module Rux
           block_arg: block_arg
         })
 
-        if node.children.size > 1
+        if node.children.size > 0
           result << " { "
           result << "|#{block_arg}| " if block_arg && node.component?
           result << "Rux.create_buffer.tap { |_rux_buf_| "
 
           node.children.each do |child|
-            result << "_rux_buf_ << #{visit(child).strip};"
+            result << append_statement_for(child)
           end
 
           result << " }.to_s }"
-        elsif node.children.size == 1
-          result << ' { '
-          result << "|#{block_arg}| " if block_arg && node.component?
-          result << visit(node.children.first).strip
-          result << ' }'
+        end
+
+        # don't pass instances of ViewComponent::Slot to _rux_buf_#<< by wrapping
+        # the slot setter return value in (retval; nil)
+        if node.slot_component?
+          result << "; nil)"
         end
 
         @render_stack.pop
+      end
+    end
+
+    def append_statement_for(node)
+      if node.is_a?(AST::TextNode)
+        "_rux_buf_.safe_append(#{visit(node).strip});"
+      else
+        "_rux_buf_.append(#{visit(node).strip});"
       end
     end
 
@@ -98,10 +113,10 @@ module Rux
         result << "Rux.create_buffer.tap { |_rux_buf_| "
 
         node.children.each do |child|
-          result << "_rux_buf_ << #{visit(child).strip};"
+          result << append_statement_for(child)
         end
 
-        result << " }.to_s"
+        result << " }.to_s;"
       end
     end
 

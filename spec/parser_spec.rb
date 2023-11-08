@@ -22,7 +22,9 @@ describe Rux::Parser do
   it 'handles a single tag with a text body' do
     expect(compile("<Hello>foo</Hello>")).to eq(<<~RUBY.strip)
       render(Hello.new) { |rux_block_arg0|
-        "foo"
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_.safe_append("foo")
+        }.to_s
       }
     RUBY
   end
@@ -96,7 +98,9 @@ describe Rux::Parser do
   it 'handles simple ruby statements in tag bodies' do
     expect(compile('<Hello>{"foo"}</Hello>')).to eq(<<~RUBY.strip)
       render(Hello.new) { |rux_block_arg0|
-        "foo"
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_.append("foo")
+        }.to_s
       }
     RUBY
   end
@@ -104,9 +108,11 @@ describe Rux::Parser do
   it 'handles tag bodies containing ruby code with curly braces' do
     expect(compile('<Hello>{[1, 2, 3].map { |n| n * 2 }.join(", ")}</Hello>')).to eq(<<~RUBY.strip)
       render(Hello.new) { |rux_block_arg0|
-        [1, 2, 3].map { |n|
-          n * 2
-        }.join(", ")
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_.append([1, 2, 3].map { |n|
+            n * 2
+          }.join(", "))
+        }.to_s
       }
     RUBY
   end
@@ -115,11 +121,11 @@ describe Rux::Parser do
     expect(compile('<Hello>abc {foo} def {bar} baz</Hello>')).to eq(<<~RUBY.strip)
       render(Hello.new) { |rux_block_arg0|
         Rux.create_buffer.tap { |_rux_buf_|
-          _rux_buf_ << "abc "
-          _rux_buf_ << foo
-          _rux_buf_ << " def "
-          _rux_buf_ << bar
-          _rux_buf_ << " baz"
+          _rux_buf_.safe_append("abc ")
+          _rux_buf_.append(foo)
+          _rux_buf_.safe_append(" def ")
+          _rux_buf_.append(bar)
+          _rux_buf_.safe_append(" baz")
         }.to_s
       }
     RUBY
@@ -136,14 +142,16 @@ describe Rux::Parser do
 
     expect(compile(rux_code)).to eq(<<~RUBY.strip)
       render(Outer.new) { |rux_block_arg0|
-        5.times.map {
-          render(Inner.new) { |rux_block_arg1|
-            Rux.create_buffer.tap { |_rux_buf_|
-              _rux_buf_ << "What a "
-              _rux_buf_ << @thing
-            }.to_s
-          }
-        }
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_.append(5.times.map {
+            render(Inner.new) { |rux_block_arg1|
+              Rux.create_buffer.tap { |_rux_buf_|
+                _rux_buf_.safe_append("What a ")
+                _rux_buf_.append(@thing)
+              }.to_s
+            }
+          })
+        }.to_s
       }
     RUBY
   end
@@ -159,14 +167,16 @@ describe Rux::Parser do
 
     expect(compile(rux_code)).to eq(<<~RUBY.strip)
       Rux.tag("div") {
-        5.times.map {
-          Rux.tag("p") {
-            Rux.create_buffer.tap { |_rux_buf_|
-              _rux_buf_ << "What a "
-              _rux_buf_ << @thing
-            }.to_s
-          }
-        }
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_.append(5.times.map {
+            Rux.tag("p") {
+              Rux.create_buffer.tap { |_rux_buf_|
+                _rux_buf_.safe_append("What a ")
+                _rux_buf_.append(@thing)
+              }.to_s
+            }
+          })
+        }.to_s
       }
     RUBY
   end
@@ -174,7 +184,9 @@ describe Rux::Parser do
   it 'handles regular HTML tags' do
     expect(compile('<div>foo</div>')).to eq(<<~RUBY.strip)
       Rux.tag("div") {
-        "foo"
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_.safe_append("foo")
+        }.to_s
       }
     RUBY
   end
@@ -190,14 +202,16 @@ describe Rux::Parser do
 
     expect(compile(rux_code)).to eq(<<~RUBY.strip)
       render(Outer.new) { |rux_block_arg0|
-        5.times.map {
-          Rux.tag("div") {
-            Rux.create_buffer.tap { |_rux_buf_|
-              _rux_buf_ << "So "
-              _rux_buf_ << @cool
-            }.to_s
-          }
-        }
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_.append(5.times.map {
+            Rux.tag("div") {
+              Rux.create_buffer.tap { |_rux_buf_|
+                _rux_buf_.safe_append("So ")
+                _rux_buf_.append(@cool)
+              }.to_s
+            }
+          })
+        }.to_s
       }
     RUBY
   end
@@ -205,7 +219,9 @@ describe Rux::Parser do
   it 'escapes HTML entities in strings' do
     expect(compile('<Hello>"foo"</Hello>')).to eq(<<~RUBY.strip)
       render(Hello.new) { |rux_block_arg0|
-        "&quot;foo&quot;"
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_.safe_append("&quot;foo&quot;")
+        }.to_s
       }
     RUBY
   end
@@ -234,9 +250,9 @@ describe Rux::Parser do
     expect(compile("<Hello>{first} {second}</Hello>")).to eq(<<~RUBY.strip)
       render(Hello.new) { |rux_block_arg0|
         Rux.create_buffer.tap { |_rux_buf_|
-          _rux_buf_ << first
-          _rux_buf_ << " "
-          _rux_buf_ << second
+          _rux_buf_.append(first)
+          _rux_buf_.safe_append(" ")
+          _rux_buf_.append(second)
         }.to_s
       }
     RUBY
@@ -252,20 +268,20 @@ describe Rux::Parser do
     expect(compile(code)).to eq(<<~RUBY.strip)
       render(Hello.new) { |rux_block_arg0|
         Rux.create_buffer.tap { |_rux_buf_|
-          _rux_buf_ << render(Hola.new) { |rux_block_arg1|
+          _rux_buf_.append(render(Hola.new) { |rux_block_arg1|
             Rux.create_buffer.tap { |_rux_buf_|
-              _rux_buf_ << first
-              _rux_buf_ << " "
-              _rux_buf_ << second
+              _rux_buf_.append(first)
+              _rux_buf_.safe_append(" ")
+              _rux_buf_.append(second)
             }.to_s
-          }
-          _rux_buf_ << render(Hola.new) { |rux_block_arg1|
+          })
+          _rux_buf_.append(render(Hola.new) { |rux_block_arg1|
             Rux.create_buffer.tap { |_rux_buf_|
-              _rux_buf_ << first
-              _rux_buf_ << " "
-              _rux_buf_ << second
+              _rux_buf_.append(first)
+              _rux_buf_.safe_append(" ")
+              _rux_buf_.append(second)
             }.to_s
-          }
+          })
         }.to_s
       }
     RUBY
@@ -303,16 +319,24 @@ describe Rux::Parser do
     expect(compile(code)).to eq(<<~RUBY.strip)
       render(TableComponent.new) { |rux_block_arg0|
         Rux.create_buffer.tap { |_rux_buf_|
-          _rux_buf_ << rux_block_arg0.with_row { |rux_block_arg1|
-            rux_block_arg1.with_column { |rux_block_arg2|
-              "Foo 1"
-            }
-          }
-          _rux_buf_ << rux_block_arg0.with_row { |rux_block_arg1|
-            rux_block_arg1.with_column { |rux_block_arg2|
-              "Foo 2"
-            }
-          }
+          _rux_buf_.append((rux_block_arg0.with_row { |rux_block_arg1|
+            Rux.create_buffer.tap { |_rux_buf_|
+              _rux_buf_.append((rux_block_arg1.with_column { |rux_block_arg2|
+                Rux.create_buffer.tap { |_rux_buf_|
+                  _rux_buf_.safe_append("Foo 1")
+                }.to_s
+              }; nil))
+            }.to_s
+          }; nil))
+          _rux_buf_.append((rux_block_arg0.with_row { |rux_block_arg1|
+            Rux.create_buffer.tap { |_rux_buf_|
+              _rux_buf_.append((rux_block_arg1.with_column { |rux_block_arg2|
+                Rux.create_buffer.tap { |_rux_buf_|
+                  _rux_buf_.safe_append("Foo 2")
+                }.to_s
+              }; nil))
+            }.to_s
+          }; nil))
         }.to_s
       }
     RUBY
@@ -327,13 +351,38 @@ describe Rux::Parser do
     RUX
     expect(compile(code)).to eq(<<~RUBY.strip)
       Rux.create_buffer.tap { |_rux_buf_|
-        _rux_buf_ << Rux.tag("div") {
-          "Foo 1"
-        }
-        _rux_buf_ << Rux.tag("div") {
-          "Foo 2"
-        }
+        _rux_buf_.append(Rux.tag("div") {
+          Rux.create_buffer.tap { |_rux_buf_|
+            _rux_buf_.safe_append("Foo 1")
+          }.to_s
+        })
+        _rux_buf_.append(Rux.tag("div") {
+          Rux.create_buffer.tap { |_rux_buf_|
+            _rux_buf_.safe_append("Foo 2")
+          }.to_s
+        })
       }.to_s
+    RUBY
+  end
+
+  it 'allows fragments nested inside ruby code' do
+    code = <<~RUX
+      <table>
+        {rows.map do |row|
+          <>{row}</>
+        end}
+      </table>
+    RUX
+    expect(compile(code)).to eq(<<~RUBY.strip)
+      Rux.tag("table") {
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_.append(rows.map { |row|
+            Rux.create_buffer.tap { |_rux_buf_|
+              _rux_buf_.append(row)
+            }.to_s
+          })
+        }.to_s
+      }
     RUBY
   end
 end

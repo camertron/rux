@@ -26,6 +26,12 @@ module Rux
     end
 
     def parse
+      AST::RootNode.new(list)
+    end
+
+    private
+
+    def list
       curlies = 1
       children = []
 
@@ -58,8 +64,6 @@ module Rux
       AST::ListNode.new(children)
     end
 
-    private
-
     def ruby
       ruby_start = pos_of(current).begin_pos
 
@@ -81,7 +85,7 @@ module Rux
 
       if pos_of(current).begin_pos != ruby_start
         AST::RubyNode.new(
-          @lexer.source_buffer.source[ruby_start...(pos_of(current).end_pos - 1)]
+          @lexer.source_buffer.source[ruby_start...(pos_of(current).begin_pos)]
         )
       end
     end
@@ -252,7 +256,7 @@ module Rux
     def literal_ruby_code
       consume(:tRUX_LITERAL_RUBY_CODE_START)
 
-      parse.tap do |res|
+      list.tap do
         consume(:tRUX_LITERAL_RUBY_CODE_END)
       end
     end

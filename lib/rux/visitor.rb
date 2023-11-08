@@ -4,6 +4,10 @@ module Rux
       node.accept(self)
     end
 
+    def visit_root(node)
+      visit_children(node)
+    end
+
     def visit_list(node)
       visit_children(node)
     end
