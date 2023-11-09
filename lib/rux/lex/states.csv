@@ -17,8 +17,8 @@ tag_self_closing_end*,,,,,,,,,,,,,
 fragment_open*,,,,,,,,,,,,,
 fragment_close*,,,,,,,,,,,,,
 ,,,,,,,,,,,,,
-attribute_spaces_body,,attribute_spaces[0],attribute_spaces[0],attribute_spaces[0],attribute_spaces_body,,,,,,,,
-attribute_spaces*,,attribute_name_body,tag_close_start,tag_self_closing_start,,,,,,,,,
+attribute_spaces_body,,attribute_spaces[0],attribute_spaces[0],attribute_spaces[0],attribute_spaces_body,,,,,,attribute_spaces[0],,
+attribute_spaces*,,attribute_name_body,tag_close_start,tag_self_closing_start,,,,,,,attribute_ruby_code_start,,
 attribute_name_body,,attribute_name_body,attribute_name[0],attribute_name[0],attribute_name[0],attribute_name[0],,,,,,,
 attribute_name*,,,tag_open_end,tag_self_closing_start,attribute_equals_spaces_body,attribute_equals,,,,,,,
 attribute_equals_spaces_body,,,attribute_equals_spaces[0],,attribute_equals_spaces_body,attribute_equals_spaces[0],,,,,,,attribute_equals_spaces[0]
@@ -39,6 +39,9 @@ attribute_value_ruby_code_end*,,attribute_name,tag_open_end,tag_self_closing_sta
 attribute_dq_value*,,,,,,,attribute_value_dq_end,,,,,,
 attribute_sq_value*,,,,,,,,attribute_value_sq_end,,,,,
 attribute_uq_value*,,attribute_name,tag_open_end,tag_self_closing_start,attribute_spaces_body,,,,,,,,
+attribute_ruby_code_start*,,,,,,,,,,,,,attribute_ruby_code[0]
+attribute_ruby_code*,,,,,,,,,,,,attribute_ruby_code_end,
+attribute_ruby_code_end*,,attribute_name,tag_open_end,tag_self_closing_start,attribute_spaces_body,,,,,,,,
 ,,,,,,,,,,,,,
 literal_body,literal[0],,,,,,,,,,literal[0],,literal_body
 literal*,,,,,,,,,,,literal_ruby_code_start,,

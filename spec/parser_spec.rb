@@ -385,4 +385,32 @@ describe Rux::Parser do
       }
     RUBY
   end
+
+  it 'demonstrates that tags support keyword splats' do
+    code = <<~RUX
+      <div {**args}>foo</div>
+    RUX
+
+    expect(compile(code)).to eq(<<~RUBY.strip)
+      Rux.tag("div", { **args }) {
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_.safe_append("foo")
+        }.to_s
+      }
+    RUBY
+  end
+
+  it 'demonstrates that tags support keyword arguments mixed with splats' do
+    code = <<~RUX
+      <div foo="bar" {**args} baz={"boo"}>foo</div>
+    RUX
+
+    expect(compile(code)).to eq(<<~RUBY.strip)
+      Rux.tag("div", { foo: "bar", **args, baz: "boo" }) {
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_.safe_append("foo")
+        }.to_s
+      }
+    RUBY
+  end
 end

@@ -13,6 +13,10 @@ module Rux
       def accept(visitor)
         visitor.visit_attr(self)
       end
+
+      def ruby_code?
+        false
+      end
     end
   end
 end

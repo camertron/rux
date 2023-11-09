@@ -105,7 +105,15 @@ module Rux
     end
 
     def visit_attr(node)
-      Utils.attr_to_hash_elem(node.name, visit(node.value), slugify: node.tag_node.component?)
+      if node.ruby_code?
+        node.code
+      else
+        Utils.attr_to_hash_elem(
+          node.name,
+          visit(node.value),
+          slugify: node.tag_node.component?
+        )
+      end
     end
 
     def visit_fragment(node)

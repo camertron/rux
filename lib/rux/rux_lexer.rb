@@ -2,6 +2,17 @@ require 'csv'
 
 module Rux
   class RuxLexer
+    RUBY_CODE_STATES = [
+      # ruby code in attributes, eg. <div {**kwargs}>
+      :tRUX_ATTRIBUTE_RUBY_CODE,
+
+      # ruby code in attribute values, eg. <div foo={bar}>
+      :tRUX_ATTRIBUTE_VALUE_RUBY_CODE,
+
+      # ruby code in tag bodies, eg. <div>{foo}</div>
+      :tRUX_LITERAL_RUBY_CODE
+    ].freeze
+
     class << self
       # See: https://docs.google.com/spreadsheets/d/11ikKuySIKoaj-kFIfhlzebUwH31cRt_1flGjWfk7RMg
       def state_table
@@ -152,8 +163,7 @@ module Rux
     # bodies. Eventually I'd like to also allow passing a Ruby hash to
     # dynamically specify attributes, but we're not there yet.
     def ruby_code?(state)
-      state == :tRUX_ATTRIBUTE_VALUE_RUBY_CODE ||
-        state == :tRUX_LITERAL_RUBY_CODE
+      RUBY_CODE_STATES.include?(state)
     end
   end
 end

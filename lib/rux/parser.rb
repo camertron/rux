@@ -40,9 +40,9 @@ module Rux
         break unless type
 
         case type
-          when :tLCURLY, :tLBRACE, :tRUX_LITERAL_RUBY_CODE_START
+          when :tLCURLY, :tLBRACE, :tRUX_LITERAL_RUBY_CODE_START, :tRUX_ATTRIBUTE_RUBY_CODE_START
             curlies += 1
-          when :tRCURLY, :tRBRACE, :tRUX_LITERAL_RUBY_CODE_END
+          when :tRCURLY, :tRBRACE, :tRUX_LITERAL_RUBY_CODE_END, :tRUX_ATTRIBUTE_RUBY_CODE_END
             curlies -= 1
         end
 
@@ -146,9 +146,21 @@ module Rux
       pos = pos_of(current)
 
       attrs = [].tap do |attrs|
-        while is?(:tRUX_ATTRIBUTE_NAME)
-          attrs << attribute
+        loop do
+          attr = case type_of(current)
+          when :tRUX_ATTRIBUTE_NAME
+            attribute
+          when :tRUX_ATTRIBUTE_RUBY_CODE_START
+            ruby_attribute
+          end
+
           maybe_consume(:tRUX_ATTRIBUTE_SPACES)
+
+          if attr
+            attrs << attr
+          else
+            break
+          end
         end
       end
 
@@ -156,7 +168,6 @@ module Rux
     end
 
     def attribute
-      maybe_consume(:tRUX_ATTRIBUTE_SPACES)
       attr_name = text_of(current)
       attr_pos = pos_of(current)
       consume(:tRUX_ATTRIBUTE_NAME)
@@ -173,6 +184,14 @@ module Rux
       end
 
       AST::AttrNode.new(attr_name, attr_value, attr_pos)
+    end
+
+    def ruby_attribute
+      consume(:tRUX_ATTRIBUTE_RUBY_CODE_START)
+
+      AST::RubyAttrNode.new(ruby).tap do
+        consume(:tRUX_ATTRIBUTE_RUBY_CODE_END)
+      end
     end
 
     def attribute_value
