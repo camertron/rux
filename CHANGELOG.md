@@ -9,6 +9,7 @@
   - Works via pseudo components that begin with `With`, eg. `<MySlotComponent><WithItem>Item</WithItem></MySlotComponent>`.
 * Allow printing `ruxc` results to STDOUT.
 * Support for unquoted attributes.
+* Drop explicit support for Ruby versions < 3.
 
 # 1.1.2
 * Don't slugify HTML attributes in the tag builder either.
