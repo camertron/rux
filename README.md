@@ -216,6 +216,26 @@ Notice the slots are "filled in" using the `#with_row` and `#with_column` method
 </TableComponent>
 ```
 
+## The `as:` argument
+
+In ViewComponent, component instances are yielded to the block on `#render`, eg:
+
+```erb
+<%= render(MyComponent.new) do |component| %>
+  <%# 'component' is the instance of MyComponent passed to #render above %>
+<% end %>
+```
+
+Most of the time in rux, a reference to the component instance isn't necessary (see the section on slots above). Occasionally however it can be useful to, for example, call methods on the component instance to query its state, etc. Use the `as:` argument to assign the component instance to a local variable that's available inside the tag body:
+
+```ruby
+<TableComponent something={value} as={table}>
+  {if table.something
+    # your code here
+  end}
+</TableComponent>
+```
+
 ## Keyword Arguments Only
 
 Any view component that will be rendered by rux must _only_ accept keyword arguments in its constructor. For example:

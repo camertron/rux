@@ -1,14 +1,6 @@
 require 'spec_helper'
 
-describe Rux do
-  def render(rux_code, **kwargs)
-    ruby_code = Rux.to_ruby(rux_code)
-    # puts ruby_code
-    ViewComponent::Base.new.instance_exec(ruby_code, **kwargs) do |ruby_code, **kwargs|
-      eval(ruby_code)
-    end
-  end
-
+describe 'rendering', type: :render do
   it 'handles a HTML tags inside ruby code' do
     result = render(<<~RUBY)
       <div>
@@ -132,6 +124,26 @@ describe Rux do
     RUBY
     expect(result).to eq(
       "<div class=\"&quot;foo&quot;\">foo</div>"
+    )
+  end
+
+  it 'handles keyword splats' do
+    kwargs = { a: "foo", b: "bar" }
+    result = render(<<~RUBY, **kwargs)
+      <ArgsComponent {**kwargs} />
+    RUBY
+    expect(result).to eq(
+      "<p>foo and bar</p>"
+    )
+  end
+
+  it 'handles keyword splats mixed with keyword args' do
+    kwargs = { a: "foo", b: "bar" }
+    result = render(<<~RUBY, **kwargs)
+      <ArgsComponent {**(kwargs.except(:b))} b={kwargs[:b]} />
+    RUBY
+    expect(result).to eq(
+      "<p>foo and bar</p>"
     )
   end
 end

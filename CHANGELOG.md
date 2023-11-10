@@ -1,3 +1,15 @@
+# 1.2.0
+* Improve output safety.
+  - HTML tags are now automatically escaped when they come from Ruby code.
+* Add fragment support.
+  - Analogous to JSX fragments, eg. `<>foo</>`.
+* Add keyword argument support in HTML attributes.
+  - Eg. `<div {**kwargs} bar="baz">boo</div>`.
+* Add ViewComponent slot support.
+  - Works via pseudo components that begin with `With`, eg. `<MySlotComponent><WithItem>Item</WithItem></MySlotComponent>`.
+* Allow printing `ruxc` results to STDOUT.
+* Support for unquoted attributes.
+
 # 1.1.2
 * Don't slugify HTML attributes in the tag builder either.
 
