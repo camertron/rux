@@ -1,0 +1,88 @@
+PATH
+  remote: ..
+  specs:
+    rux (1.2.0)
+      onload (~> 1.1)
+      parser (~> 3.0)
+      unparser (~> 0.6)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    appraisal (2.5.0)
+      bundler
+      rake
+      thor (>= 0.14.0)
+    appraisal-run (1.0.0)
+    ast (2.4.3)
+    cgi (0.5.0)
+    csv (3.3.5)
+    date (3.4.1)
+    debug (1.11.0)
+      irb (~> 1.10)
+      reline (>= 0.3.8)
+    diff-lcs (1.6.2)
+    erb (4.0.4)
+      cgi (>= 0.3.3)
+    io-console (0.8.1)
+    irb (1.15.2)
+      pp (>= 0.6.0)
+      rdoc (>= 4.0.0)
+      reline (>= 0.4.2)
+    onload (1.1.0)
+    parser (3.3.9.0)
+      ast (~> 2.4.1)
+      racc
+    pp (0.6.3)
+      prettyprint
+    prettyprint (0.2.0)
+    prism (1.5.2)
+    psych (5.2.6)
+      date
+      stringio
+    racc (1.8.1)
+    rake (13.3.0)
+    rdoc (6.15.0)
+      erb
+      psych (>= 4.0.0)
+      tsort
+    reline (0.6.2)
+      io-console (~> 0.5)
+    rspec (3.13.1)
+      rspec-core (~> 3.13.0)
+      rspec-expectations (~> 3.13.0)
+      rspec-mocks (~> 3.13.0)
+    rspec-core (3.13.5)
+      rspec-support (~> 3.13.0)
+    rspec-expectations (3.13.5)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-mocks (3.13.5)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-support (3.13.6)
+    stringio (3.1.7)
+    thor (1.4.0)
+    tsort (0.2.0)
+    unparser (0.8.0)
+      diff-lcs (~> 1.6)
+      parser (>= 3.3.0)
+      prism (>= 1.4)
+
+PLATFORMS
+  aarch64-linux
+
+DEPENDENCIES
+  appraisal
+  appraisal-run
+  csv
+  debug
+  rake
+  rspec
+  rux!
+
+RUBY VERSION
+   ruby 3.1.7p261
+
+BUNDLED WITH
+   2.3.27

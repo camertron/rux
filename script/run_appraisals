@@ -1,0 +1,3 @@
+#! /bin/bash
+
+bundle exec appraisal-run gemfiles/*.gemfile -- bundle exec rake

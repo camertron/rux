@@ -8,4 +8,9 @@ group :development, :test do
   gem 'rspec'
 end
 
+group :development do
+  gem 'appraisal'
+  gem 'appraisal-run'
+end
+
 gem 'csv'
