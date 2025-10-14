@@ -1,0 +1,13 @@
+#! /usr/bin/env ruby
+
+$:.push(File.expand_path('./lib'))
+
+require 'rux'
+
+code = STDIN.read
+result = Rux::Lexer.lex(code)
+
+result.each do |(type, (str, loc))|
+  loc_str = loc.to_range.to_s.rjust(12, " ")
+  puts "#{loc_str} #{type} #{str.inspect}"
+end

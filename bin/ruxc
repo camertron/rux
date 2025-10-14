@@ -5,6 +5,7 @@ $:.push(File.expand_path('./lib'))
 require 'pathname'
 require 'optparse'
 require 'rux'
+require 'onload'
 
 class RuxCLI
   def self.parse(argv)
@@ -15,7 +16,8 @@ class RuxCLI
 
     options = {
       pretty: true,
-      stdout: false
+      stdout: false,
+      ignore_path: nil,
     }
 
     if argv.first != '-h' && argv.first != '--help'
@@ -38,6 +40,14 @@ class RuxCLI
       DESC
         opts.on('-o', '--stdout', desc) do |stdout|
           options[:stdout] = stdout
+        end
+      end
+
+      oneline(<<~DESC).tap do |desc|
+        Update the given git ignore file with transpiled file paths.
+      DESC
+        opts.on('-i', '--ignore-path=PATH', desc) do |ignore_path|
+          options[:ignore_path] = ignore_path
         end
       end
 
@@ -91,7 +101,16 @@ class RuxCLI
     @options[:stdout]
   end
 
+  def ignore_file
+    return nil unless ignore_path
+    @ignore_file ||= Onload::IgnoreFile.load(ignore_path)
+  end
+
   private
+
+  def ignore_path
+    @options[:ignore_path]
+  end
 
   def directory?
     File.directory?(in_path)
@@ -101,7 +120,11 @@ end
 cli = RuxCLI.parse(ARGV)
 cli.validate
 
-cli.each_file do |in_file, out_file, rbi_file|
+at_exit do
+  cli.ignore_file&.persist!
+end
+
+cli.each_file do |in_file, out_file|
   rux_file = Rux::File.new(in_file)
 
   if cli.write_to_stdout?
@@ -109,5 +132,7 @@ cli.each_file do |in_file, out_file, rbi_file|
   else
     rux_file.write(out_file, pretty: cli.pretty?)
     puts "Wrote #{out_file}"
+
+    cli.ignore_file&.add(out_file)
   end
 end

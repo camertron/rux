@@ -10,7 +10,7 @@ describe 'parsing', type: :parser do
   it 'raises an error when no state transition can be found' do
     expect { compile('<Hello <foo>') }.to(
       raise_error(Rux::Lexer::TransitionError,
-        'no transition found from tRUX_ATTRIBUTE_SPACES_BODY at position 7 '\
+        'no transition found from tRUX_ATTRIBUTE_SPACES_BODY for "<" at position 7 '\
           'while lexing rux code')
     )
   end
@@ -61,6 +61,30 @@ describe 'parsing', type: :parser do
           })
         }.to_s
       }
+    RUBY
+  end
+
+  it 'preserves comments' do
+    code = <<~RUX
+      # frozen_string_literal: true
+
+      class Foo
+        def call
+          <p>Hello</p>
+        end
+      end
+    RUX
+    expect(compile(code)).to eq(<<~RUBY)
+      # frozen_string_literal: true
+      class Foo
+        def call
+          Rux.tag("p") {
+            Rux.create_buffer.tap { |_rux_buf_|
+              _rux_buf_.safe_append("Hello")
+            }.to_s
+          }
+        end
+      end
     RUBY
   end
 end

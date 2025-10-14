@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe 'rendering', type: :render do
-  it 'handles a HTML tags inside ruby code' do
+  it 'handles HTML tags inside ruby code' do
     result = render(<<~RUBY)
       <div>
         {3.times.map do

@@ -109,4 +109,13 @@ describe 'attributes', type: :parser do
       }
     RUBY
   end
+
+  it 'allows attributes to start with @' do
+    code = <<~RUX
+      <div @click="alert('foo')" />
+    RUX
+    expect(compile(code)).to eq(<<~RUBY.strip)
+      Rux.tag("div", { :@click => "alert('foo')" })
+    RUBY
+  end
 end

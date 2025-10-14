@@ -8,14 +8,18 @@ module Rux
     class << self
       def parse_file(path)
         buffer = ::Parser::Source::Buffer.new(path).read
-        lexer = ::Rux::Lexer.new(buffer)
-        new(lexer).parse
+        new(make_lexer(buffer)).parse
       end
 
       def parse(str)
         buffer = ::Parser::Source::Buffer.new('(source)', source: str)
-        lexer = ::Rux::Lexer.new(buffer)
-        new(lexer).parse
+        new(make_lexer(buffer)).parse
+      end
+
+      private
+
+      def make_lexer(buffer)
+        ::Rux::Lexer.new(buffer)
       end
     end
 
@@ -137,6 +141,8 @@ module Rux
       if is?(:tRUX_LITERAL, :tRUX_LITERAL_RUBY_CODE_START)
         lit = literal
         node.children << lit if lit
+      elsif is?(:tRUX_FRAGMENT_OPEN)
+        node.children << fragment
       else
         node.children << tag
       end
