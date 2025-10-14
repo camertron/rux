@@ -1,10 +1,11 @@
 module Rux
   module AST
     class RootNode
-      attr_reader :list
+      attr_reader :list, :source_buffer
 
-      def initialize(list)
+      def initialize(list, source_buffer)
         @list = list
+        @source_buffer = source_buffer
       end
 
       def accept(visitor)

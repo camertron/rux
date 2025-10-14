@@ -77,6 +77,21 @@ describe 'attributes', type: :parser do
     RUBY
   end
 
+  it 'accepts a lambda as an attribute' do
+    code = <<~RUX
+      <button onclick={-> { puts 'foo' }}>Click me</button>
+    RUX
+    expect(compile(code)).to eq(<<~RUBY.strip)
+      Rux.tag("button", { onclick: ->() {
+        puts("foo")
+      } }) {
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_.safe_append("Click me")
+        }.to_s
+      }
+    RUBY
+  end
+
   it 'slugifies ruby arguments' do
     code = <<~RUX
       <Hello data-foo="bar" />
@@ -92,6 +107,15 @@ describe 'attributes', type: :parser do
     RUX
     expect(compile(code)).to eq(<<~RUBY.strip)
       Rux.tag("div", { :"data-foo" => "bar" })
+    RUBY
+  end
+
+  it 'allows attributes to start with @' do
+    code = <<~RUX
+      <div @click="alert('foo')" />
+    RUX
+    expect(compile(code)).to eq(<<~RUBY.strip)
+      Rux.tag("div", { :@click => "alert('foo')" })
     RUBY
   end
 end

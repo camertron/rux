@@ -123,7 +123,7 @@ module Rux
 
         unless cur_trans
           raise Rux::Lexer::TransitionError,
-            "no transition found from #{cur_state} at position #{@p} while "\
+            "no transition found from #{cur_state} for #{chr.inspect} at position #{@p} while "\
             'lexing rux code'
         end
 

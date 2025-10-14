@@ -74,7 +74,7 @@ module Rux
         type, (_, pos) = token
 
         case type
-          when :tLCURLY, :tLBRACE
+          when :tLCURLY, :tLBRACE, :tLAMBEG
             curlies += 1
           when :tRCURLY, :tRBRACE
             curlies -= 1

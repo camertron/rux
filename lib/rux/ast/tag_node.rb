@@ -1,13 +1,22 @@
 module Rux
   module AST
     class TagNode
-      attr_reader :name, :attrs, :children
+      attr_reader :name, :attrs, :self_closing, :pos, :children
 
-      def initialize(name, attrs, pos)
+      def initialize(name, attrs, self_closing, pos)
         @name = name
         @attrs = attrs
+        @self_closing = self_closing
         @pos = pos
         @children = []
+      end
+
+      alias self_closing? self_closing
+
+      def with_attrs(new_attrs)
+        self.class.new(name, attrs.with_attrs(new_attrs), self_closing, pos).tap do |new_node|
+          new_node.instance_variable_set(:@children, children)
+        end
       end
 
       def accept(visitor)

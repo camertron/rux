@@ -8,14 +8,18 @@ module Rux
     class << self
       def parse_file(path)
         buffer = ::Parser::Source::Buffer.new(path).read
-        lexer = ::Rux::Lexer.new(buffer)
-        new(lexer).parse
+        new(make_lexer(buffer)).parse
       end
 
       def parse(str)
         buffer = ::Parser::Source::Buffer.new('(source)', source: str)
-        lexer = ::Rux::Lexer.new(buffer)
-        new(lexer).parse
+        new(make_lexer(buffer)).parse
+      end
+
+      private
+
+      def make_lexer(buffer)
+        ::Rux::Lexer.new(buffer)
       end
     end
 
@@ -23,10 +27,11 @@ module Rux
       @lexer = lexer
       @stack = []
       @current = get_next
+      @last_pos = 0
     end
 
     def parse
-      AST::RootNode.new(list)
+      AST::RootNode.new(list, @lexer.source_buffer)
     end
 
     private
@@ -65,7 +70,7 @@ module Rux
     end
 
     def ruby
-      ruby_start = pos_of(current).begin_pos
+      ruby_start = @last_pos
 
       loop do
         type = type_of(current)
@@ -79,14 +84,14 @@ module Rux
 
       unless type_of(current)
         return AST::RubyNode.new(
-          @lexer.source_buffer.source[ruby_start..-1]
+          @lexer.source_buffer.source[ruby_start..-1],
+          ::Parser::Source::Range.new(@lexer.source_buffer, ruby_start, @lexer.source_buffer.source.length)
         )
       end
 
       if pos_of(current).begin_pos != ruby_start
-        AST::RubyNode.new(
-          @lexer.source_buffer.source[ruby_start...(pos_of(current).begin_pos)]
-        )
+        loc = ::Parser::Source::Range.new(@lexer.source_buffer, ruby_start, pos_of(current).begin_pos)
+        AST::RubyNode.new(loc.source, loc)
       end
     end
 
@@ -99,7 +104,7 @@ module Rux
       attrs = attributes
       maybe_consume(:tRUX_ATTRIBUTE_SPACES)
       maybe_consume(:tRUX_TAG_OPEN_END)
-      tag_node = AST::TagNode.new(tag_name, attrs, tag_pos)
+      tag_node = AST::TagNode.new(tag_name, attrs, is?(:tRUX_TAG_SELF_CLOSING_END), tag_pos)
       attrs.each { |attr_node| attr_node.tag_node = tag_node }
 
       if is?(:tRUX_TAG_SELF_CLOSING_END)
@@ -137,6 +142,8 @@ module Rux
       if is?(:tRUX_LITERAL, :tRUX_LITERAL_RUBY_CODE_START)
         lit = literal
         node.children << lit if lit
+      elsif is?(:tRUX_FRAGMENT_OPEN)
+        node.children << fragment
       else
         node.children << tag
       end
@@ -242,9 +249,10 @@ module Rux
     end
 
     def fragment
+      fragment_pos = pos_of(current)
       consume(:tRUX_FRAGMENT_OPEN)
 
-      AST::FragmentNode.new.tap do |fragment_node|
+      AST::FragmentNode.new(fragment_pos).tap do |fragment_node|
         until is?(:tRUX_TAG_CLOSE_START)
           populate_next_child(fragment_node)
         end
@@ -304,6 +312,7 @@ module Rux
       end
 
       @current = get_next
+      @last_pos = pos_of(current)&.begin_pos || @lexer.source_buffer.source.size
     end
 
     def type_of(token)

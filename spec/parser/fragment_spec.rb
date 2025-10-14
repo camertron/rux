@@ -44,4 +44,21 @@ describe 'fragments', type: :parser do
       }
     RUBY
   end
+
+  it 'allows fragments nested inside other tags' do
+    code = <<~RUX
+      <div>
+        <>{"foo"}</>
+      </div>
+    RUX
+    expect(compile(code)).to eq(<<~RUBY.strip)
+      Rux.tag("div") {
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_.append(Rux.create_buffer.tap { |_rux_buf_|
+            _rux_buf_.append("foo")
+          }.to_s)
+        }.to_s
+      }
+    RUBY
+  end
 end

@@ -1,9 +1,18 @@
+require 'parser'
+
 module Rux
   class Lexer
     class EOFError < StandardError; end
     class TransitionError < StandardError; end
 
     attr_reader :source_buffer
+
+    class << self
+      def lex(str)
+        buffer = ::Parser::Source::Buffer.new('(source)', source: str)
+        new(buffer).to_a
+      end
+    end
 
     def initialize(source_buffer)
       @source_buffer = source_buffer
@@ -15,6 +24,10 @@ module Rux
       @generator.next
     rescue StopIteration
       [nil, ['$eof']]
+    end
+
+    def to_a
+      @generator.to_a
     end
 
     private

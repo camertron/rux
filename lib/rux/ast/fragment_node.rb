@@ -1,10 +1,11 @@
 module Rux
   module AST
     class FragmentNode
-      attr_reader :children
+      attr_reader :children, :pos
 
-      def initialize
+      def initialize(pos)
         @children = []
+        @pos = pos
       end
 
       def accept(visitor)

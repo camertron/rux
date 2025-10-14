@@ -1,3 +1,13 @@
+# 1.3.0
+* Various parser and codegen fixes to more completely support the rux syntax.
+* Add ignore file support to `ruxc` via the onload gem (which is also used by rux-rails).
+  - Pass the `--ignore-path=PATH` flag to add all generated files to the given ignore file, eg. a .gitignore.
+* Add the `underscore_attributes` option to `Rux.to_ruby` and `Rux::File#to_ruby`.
+  - By default, rux converts dasherized attributes to underscored ones, eg `<FooComponent foo-bar="baz">` becomes `FooComponent.new(foo_bar: "baz")`.
+  - Pass `underscore_attributes: false` to prevent attribute transformation.
+* Sourcemap support
+  - Pass `--emit-sourcemaps` to `ruxc` to automatically write them to disk.
+
 # 1.2.0
 * Improve output safety.
   - HTML tags are now automatically escaped when they come from Ruby code.

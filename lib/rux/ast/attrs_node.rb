@@ -10,6 +10,10 @@ module Rux
         @pos = pos
       end
 
+      def with_attrs(new_attrs)
+        self.class.new([*attrs, *new_attrs], pos)
+      end
+
       def accept(visitor)
         visitor.visit_attrs(self)
       end

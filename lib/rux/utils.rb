@@ -1,7 +1,7 @@
 module Rux
   module Utils
-    def attr_to_hash_elem(key, value, slugify: true)
-      key = key.gsub('-', '_') if slugify
+    def attr_to_hash_elem(key, value, underscore: true)
+      key = key.gsub('-', '_') if underscore
 
       if key =~ /\A[\w\d]+\z/
         "#{key}: #{value}"

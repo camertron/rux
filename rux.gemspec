@@ -10,6 +10,7 @@ Gem::Specification.new do |s|
   s.description = s.summary = 'A jsx-inspired way to write view components.'
   s.platform = Gem::Platform::RUBY
 
+  s.add_dependency 'onload', "~> 1.1"
   s.add_dependency 'parser', '~> 3.0'
   s.add_dependency 'unparser', '~> 0.6'
 

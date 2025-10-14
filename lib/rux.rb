@@ -17,30 +17,35 @@ require 'parser/current'
 require 'unparser'
 
 module Rux
-  autoload :AST,               'rux/ast'
-  autoload :Buffer,            'rux/buffer'
-  autoload :Component,         'rux/component'
-  autoload :DefaultTagBuilder, 'rux/default_tag_builder'
-  autoload :DefaultVisitor,    'rux/default_visitor'
-  autoload :File,              'rux/file'
-  autoload :Lex,               'rux/lex'
-  autoload :Lexer,             'rux/lexer'
-  autoload :Parser,            'rux/parser'
-  autoload :RubyLexer,         'rux/ruby_lexer'
-  autoload :RuxLexer,          'rux/rux_lexer'
-  autoload :Utils,             'rux/utils'
-  autoload :Visitor,           'rux/visitor'
+  autoload :AST,                         'rux/ast'
+  autoload :Buffer,                      'rux/buffer'
+  autoload :Component,                   'rux/component'
+  autoload :DefaultTagBuilder,           'rux/default_tag_builder'
+  autoload :DefaultVisitor,              'rux/default_visitor'
+  autoload :DefaultVisitorWithSourceMap, 'rux/default_visitor_with_source_map'
+  autoload :File,                        'rux/file'
+  autoload :Lex,                         'rux/lex'
+  autoload :Lexer,                       'rux/lexer'
+  autoload :Parser,                      'rux/parser'
+  autoload :RubyLexer,                   'rux/ruby_lexer'
+  autoload :RuxLexer,                    'rux/rux_lexer'
+  autoload :SourceMap,                   'rux/source_map'
+  autoload :Utils,                       'rux/utils'
+  autoload :Visitor,                     'rux/visitor'
 
   class << self
     attr_accessor :tag_builder, :buffer
 
-    def to_ruby(str, visitor: default_visitor, pretty: true)
+    def to_ruby(str, visitor: nil, pretty: true, underscore_attributes: true)
+      visitor ||= DefaultVisitor.new(
+        underscore_attributes: underscore_attributes
+      )
+
       ruby_code = visitor.visit(Parser.parse(str))
       return ruby_code unless pretty
 
-      ::Unparser.unparse(
-        ::Parser::CurrentRuby.parse(ruby_code)
-      )
+      ast, comments = *::Parser::CurrentRuby.parse_with_comments(ruby_code)
+      ::Unparser.unparse(ast, comments: comments)
     end
 
     def default_visitor

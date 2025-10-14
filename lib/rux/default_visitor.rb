@@ -2,8 +2,9 @@ require 'cgi'
 
 module Rux
   class DefaultVisitor < Visitor
-    def initialize
+    def initialize(**options)
       @render_stack = []
+      @options = options
     end
 
     def visit_root(node)
@@ -70,11 +71,7 @@ module Rux
           result << " { "
           result << "|#{block_arg}| " if block_arg && node.component?
           result << "Rux.create_buffer.tap { |_rux_buf_| "
-
-          node.children.each do |child|
-            result << append_statement_for(child)
-          end
-
+          result << visit_tag_children(node).join
           result << " }.to_s }"
         end
 
@@ -88,11 +85,17 @@ module Rux
       end
     end
 
+    def visit_tag_children(node)
+      node.children.map do |child|
+        append_statement_for(child)
+      end
+    end
+
     def append_statement_for(node)
       if node.is_a?(AST::TextNode)
-        "_rux_buf_.safe_append(#{visit(node).strip});"
+        "_rux_buf_.safe_append(#{visit(node).strip.chomp(';')});"
       else
-        "_rux_buf_.append(#{visit(node).strip});"
+        "_rux_buf_.append(#{visit(node).strip.chomp(';')});"
       end
     end
 
@@ -111,7 +114,7 @@ module Rux
         Utils.attr_to_hash_elem(
           node.name,
           visit(node.value),
-          slugify: node.tag_node.component?
+          underscore: node.tag_node.component? && underscore_attributes?
         )
       end
     end
@@ -136,6 +139,10 @@ module Rux
 
     def parent_render
       @render_stack.last
+    end
+
+    def underscore_attributes?
+      @options.fetch(:underscore_attributes, true)
     end
   end
 end
