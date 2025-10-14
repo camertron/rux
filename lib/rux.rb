@@ -38,9 +38,8 @@ module Rux
       ruby_code = visitor.visit(Parser.parse(str))
       return ruby_code unless pretty
 
-      ::Unparser.unparse(
-        ::Parser::CurrentRuby.parse(ruby_code)
-      )
+      ast, comments = *::Parser::CurrentRuby.parse_with_comments(ruby_code)
+      ::Unparser.unparse(ast, comments: comments)
     end
 
     def default_visitor

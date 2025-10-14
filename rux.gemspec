@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'onload', '~> 1.1'
   s.add_dependency 'parser', '~> 3.0'
-  s.add_dependency 'unparser', '~> 0.6'
+  s.add_dependency 'unparser', '~> 0.8'
 
   s.require_path = 'lib'
   s.executables << 'ruxc'

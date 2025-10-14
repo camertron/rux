@@ -71,10 +71,7 @@ module Rux
           result << "|#{block_arg}| " if block_arg && node.component?
           result << "Rux.create_buffer.tap { |_rux_buf_| "
 
-          node.children.each do |child|
-            result << append_statement_for(child)
-          end
-
+          result << visit_tag_children(node).join
           result << " }.to_s }"
         end
 
@@ -88,11 +85,17 @@ module Rux
       end
     end
 
+    def visit_tag_children(node)
+      node.children.map do |child|
+        append_statement_for(child)
+      end
+    end
+
     def append_statement_for(node)
       if node.is_a?(AST::TextNode)
-        "_rux_buf_.safe_append(#{visit(node).strip});"
+        "_rux_buf_.safe_append(#{visit(node).strip.chomp(';')});"
       else
-        "_rux_buf_.append(#{visit(node).strip});"
+        "_rux_buf_.append(#{visit(node).strip.chomp(';')});"
       end
     end
 

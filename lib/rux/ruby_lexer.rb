@@ -1,4 +1,18 @@
 module Rux
+  class TokenArrayProxy < Array
+    def initialize(rux_token_queue)
+      @rux_token_queue = rux_token_queue
+    end
+
+    def push(token)
+      if token[0] == :tCOMMENT
+        @rux_token_queue.push(token)
+      end
+
+      super
+    end
+  end
+
   class RubyLexer < ::Parser::Lexer
     # These are populated when ::Parser::Lexer loads and are therefore
     # not inherited. We have to copy them over manually.
@@ -15,6 +29,8 @@ module Rux
       @generator = to_enum(:each_token)
       @rux_token_queue = []
       @p = init_pos
+
+      self.tokens = TokenArrayProxy.new(@rux_token_queue)
     end
 
     alias_method :advance_orig, :advance
@@ -74,7 +90,7 @@ module Rux
         type, (_, pos) = token
 
         case type
-          when :tLCURLY, :tLBRACE
+          when :tLCURLY, :tLBRACE, :tLAMBEG
             curlies += 1
           when :tRCURLY, :tRBRACE
             curlies -= 1
