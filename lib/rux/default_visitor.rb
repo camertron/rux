@@ -32,7 +32,7 @@ module Rux
     def visit_tag(node)
       ''.tap do |result|
         block_arg = if (as = node.attrs.get('as'))
-          visit(as)
+          visit(as.value)
         end
 
         block_arg ||= "rux_block_arg#{@render_stack.size}"

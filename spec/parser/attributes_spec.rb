@@ -94,4 +94,19 @@ describe 'attributes', type: :parser do
       Rux.tag("div", { :"data-foo" => "bar" })
     RUBY
   end
+
+  it 'yields the component instance to the block using the as: argument for the variable name' do
+    code = <<~RUX
+      <Hello as={hello}>
+        {hello.foo}
+      </Hello>
+    RUX
+    expect(compile(code)).to eq(<<~RUBY.strip)
+      render(Hello.new) { |hello|
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_.append(hello.foo)
+        }.to_s
+      }
+    RUBY
+  end
 end
