@@ -1,3 +1,14 @@
+# 1.3.0
+* Automatically add generated files to an ignore file, eg. .gitignore.
+  - Pass the --ignore-path=PATH flag to ruxc to indicate the file to update.
+* Add the ruxlex executable that prints parser tokens for debugging purposes.
+* Preserve Ruby comments in generated files.
+* Fix the `as:` argument, which was being improperly generated in earlier versions.
+* General parser improvements.
+  - Allows fragments to be nested within other tags.
+  - Allows tags after ruby code in branch structures like `if..else`.
+* Allows HTML attributes to start with `@`.
+
 # 1.2.0
 * Improve output safety.
   - HTML tags are now automatically escaped when they come from Ruby code.
