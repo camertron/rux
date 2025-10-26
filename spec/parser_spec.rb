@@ -87,4 +87,29 @@ describe 'parsing', type: :parser do
       end
     RUBY
   end
+
+  it 'allows a tag after ruby code in a branch situation' do
+    code = <<~RUX
+      <div>
+        {if foo
+          <>foo</>
+        else
+          <div></div>
+        end}
+      </div>
+    RUX
+    expect(compile(code)).to eq(<<~RUBY.strip)
+      Rux.tag("div") {
+        Rux.create_buffer.tap { |_rux_buf_|
+          _rux_buf_.append(if foo
+            Rux.create_buffer.tap { |_rux_buf_|
+              _rux_buf_.safe_append("foo")
+            }.to_s
+          else
+            Rux.tag("div")
+          end)
+        }.to_s
+      }
+    RUBY
+  end
 end

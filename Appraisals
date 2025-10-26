@@ -1,7 +1,3 @@
-appraise 'ruby-3.0' do
-  ruby '~> 3.0'
-end
-
 appraise 'ruby-3.1' do
   ruby '~> 3.1'
 end

@@ -43,6 +43,7 @@ module Rux
       @ts = @te = @p = pos
       @eof = false
       @rux_token_queue.clear
+      clear_queue
       populate_queue
     end
 
@@ -60,13 +61,7 @@ module Rux
     end
 
     def each_token(&block)
-      # We detect whether or not we're at the beginning of a rux tag by looking
-      # ahead by 1 token; that's why the first element in @rux_token_queue is
-      # yielded immediately. If the lexer _starts_ at a rux tag however,
-      # lookahead is a lot more difficult. To mitigate, we insert a dummy skip
-      # token here. That way, at_rux? checks the right tokens in the queue and
-      # correctly identifies the start of a rux tag.
-      @rux_token_queue << [:tSKIP, ['$skip', make_range(@p, @p)]]
+      clear_queue
 
       @eof = false
       curlies = 1
@@ -125,6 +120,18 @@ module Rux
         break unless cur_token[0]
         @rux_token_queue << cur_token
       end
+    end
+
+    def clear_queue
+      @rux_token_queue.clear
+
+      # We detect whether or not we're at the beginning of a rux tag by looking
+      # ahead by 1 token; that's why the first element in @rux_token_queue is
+      # yielded immediately. If the lexer _starts_ at a rux tag however,
+      # lookahead is a lot more difficult. To mitigate, we insert a dummy skip
+      # token here. That way, at_rux? checks the right tokens in the queue and
+      # correctly identifies the start of a rux tag.
+      @rux_token_queue << [:tSKIP, ['$skip', make_range(@p, @p)]]
     end
 
     def at_rux?

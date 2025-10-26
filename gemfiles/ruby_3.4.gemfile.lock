@@ -4,7 +4,7 @@ PATH
     rux (1.2.0)
       onload (~> 1.1)
       parser (~> 3.0)
-      unparser (~> 0.6)
+      unparser (~> 0.8)
 
 GEM
   remote: https://rubygems.org/
