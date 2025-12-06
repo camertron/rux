@@ -7,8 +7,7 @@ module ViewComponent
     end
 
     def to_s
-      @component_instance.content = @content_block.call(@component_instance) if @content_block
-      @component_instance.call
+      @component_instance.render_in(nil, &@content_block)
     end
   end
 
@@ -40,14 +39,18 @@ module ViewComponent
       end
     end
 
-    attr_accessor :content
-
     def render(component, &block)
-      if block
-        component.content = block.call(component)
-      end
+      component.render_in(nil, &block)
+    end
 
-      component.call
+    def render_in(_view_context, &block)
+      @content_block = block
+      content  # fill in slots
+      call
+    end
+
+    def content
+      @content ||= @content_block&.call(self)
     end
 
     private

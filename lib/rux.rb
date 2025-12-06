@@ -20,6 +20,7 @@ module Rux
   autoload :AST,               'rux/ast'
   autoload :Buffer,            'rux/buffer'
   autoload :Component,         'rux/component'
+  autoload :Context,           'rux/context'
   autoload :DefaultTagBuilder, 'rux/default_tag_builder'
   autoload :DefaultVisitor,    'rux/default_visitor'
   autoload :File,              'rux/file'
@@ -64,6 +65,14 @@ module Rux
 
     def library_paths
       @library_paths ||= []
+    end
+
+    def create_context(...)
+      Rux::Context.create(...)
+    end
+
+    def use_context(...)
+      Rux::Context.use(...)
     end
   end
 

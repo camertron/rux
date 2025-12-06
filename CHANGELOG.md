@@ -1,3 +1,8 @@
+# 1.4.0
+* Implement React-style contexts for passing arguments across arbitrary levels of component nesting.
+  - Define a new context via `Rux.create_context`.
+  - Read that context later via `Rux.use_context`.
+
 # 1.3.0
 * Automatically add generated files to an ignore file, eg. .gitignore.
   - Pass the --ignore-path=PATH flag to ruxc to indicate the file to update.

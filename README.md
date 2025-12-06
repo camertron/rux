@@ -268,6 +268,51 @@ Notice that the rux attribute "first-name" is passed to `MyComponent#initialize`
 
 Attributes on regular tags, i.e. non-component tags like `<div>` and `<span>`, are not modified. In other words, `<div data-foo="foo">` does _not_ become `<div data_foo="foo">` because that would be very annoying.
 
+## Context
+
+Occasionally you might find it necessary to pass values across multiple component boundaries. A grandparent component might want to pass values to its grandchildren but not the parent components (i.e. the grandparent's direct children).
+
+For example, imagine you'd like to support multiple themes on your website, like dark and light mode. While it would be possible to add a `theme:` argument to all your components, doing so could be quite invasive - you'd have to modify every single one.
+
+Contexts are modeled after the React concept by the same name. They allow you to set values at one level of the component hierarchy and consume them at a deeper one, without having to pass the values through every intermediate level.
+
+First, create a new context, passing an optional default value or default block. Note that the value stored in a context can be anything, i.e. any Ruby object.
+
+```ruby
+# with a default value
+ThemeContext = Rux.create_context("dark")
+
+# with a default block
+ThemeContext = Rux.create_context { "dark" }
+```
+
+NOTE: passing a default block takes precedence over default values. In other words, if you pass both an argument _and_ a block to `create_context`, only the block will be used to produce default values.
+
+The `create_context` method returns a component class. Rux requires that all components start with an uppercase letter, i.e. be a Ruby constant, which is why we assigned it to the `ThemeContext` constant in the example above. You can now render the context component like you would any other component:
+
+```ruby
+<ThemeContext value="light">
+  <Heading>Welcome!</Heading>
+  <WelcomePage />
+</ThemeContext>
+```
+
+Now that we've defined a context and rendered it, any component rendered inside `ThemeContext` (i.e. any of its children) can access the context like this:
+
+```ruby
+class WelcomePage < ViewComponent::Base
+  def call
+    theme = Rux.use_context(ThemeContext)
+
+    <div>
+      <h2 style={theme == "dark" ? "color: #FFF" : "color: #000"}>
+        Welcome to my site!
+      </h2>
+    </div>
+  end
+end
+```
+
 ## How it Works
 
 Translating rux code (Ruby + HTML tags) into Ruby code happens in three phases: lexing, parsing, and emitting. The lexer phase is implemented as a wrapper around the lexer from the [Parser gem](https://github.com/whitequark/parser) that looks for specific patterns in the token stream. When it finds an opening HTML tag, it hands off lexing to the rux lexer. When the tag ends, the lexer continues emitting Ruby tokens, and so on.
