@@ -1,8 +1,8 @@
 ## rux
 
-/rʌks/, rhymes with "ducks" and "trucks"
-
 ![Unit Tests](https://github.com/camertron/rux/actions/workflows/unit_tests.yml/badge.svg?branch=master)
+
+/rʌks/, rhymes with "ducks" and "trucks"
 
 Rux is a JSX-inspired way to write HTML tags in your Ruby code. It can be used to render view components in Rails via the [rux-rails gem](https://github.com/camertron/rux-rails). This repo however contains only the rux parser itself.
 
