@@ -1,4 +1,4 @@
-## rux
+## rux /rʌks/, rhymes with "ducks" and "trucks"
 
 ![Unit Tests](https://github.com/camertron/rux/actions/workflows/unit_tests.yml/badge.svg?branch=master)
 
