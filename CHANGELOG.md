@@ -1,3 +1,6 @@
+# 1.4.1
+* Fix bug preventing use of curly brace-delimited block syntax, eg. `[1, 2].each { ... }`.
+
 # 1.4.0
 * Implement React-style contexts for passing arguments across arbitrary levels of component nesting.
   - Define a new context via `Rux.create_context`.

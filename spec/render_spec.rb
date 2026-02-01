@@ -25,6 +25,24 @@ describe 'rendering', type: :render do
     expect(result).to eq("<div><p>Welcome!</p><p>Welcome!</p><p>Welcome!</p></div>")
   end
 
+  it 'handles curly brace block syntax' do
+    result = render(<<~RUBY)
+      [1, 2, 3].map { |i| <div>{i}</div> }
+    RUBY
+
+    expect(result).to eq(["<div>1</div>", "<div>2</div>", "<div>3</div>"])
+  end
+
+  it 'handles curly brace block syntax with wrapping tag' do
+    result = render(<<~RUBY)
+      <span>
+        {[1, 2, 3].map { |i| <div>{i}</div> }}
+      </span>
+    RUBY
+
+    expect(result).to eq("<span><div>1</div><div>2</div><div>3</div></span>")
+  end
+
   it 'correctly handles keyword arguments (ruby 3)' do
     result = render(<<~RUBY)
       <ArgsComponent a="a" b="b" />

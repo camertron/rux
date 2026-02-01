@@ -19,7 +19,12 @@ module Rux
       private
 
       def make_lexer(buffer)
-        ::Rux::Lexer.new(buffer)
+        if ENV["RUX_DEBUG"]
+          require "rux/debug_lexer"
+          ::Rux::DebugLexer.new(buffer)
+        else
+          ::Rux::Lexer.new(buffer)
+        end
       end
     end
 
@@ -50,19 +55,21 @@ module Rux
             curlies -= 1
         end
 
-        break if curlies == 0
-
         if rb = ruby
           children << rb
         elsif type_of(current) == :tRUX_TAG_OPEN_START
           children << tag
         elsif type_of(current) == :tRUX_FRAGMENT_OPEN
           children << fragment
+        elsif type_of(current) == :tRUX_LITERAL_RUBY_CODE_END
+          # do nothing - let #literal_ruby_code consume the end token
         else
           raise UnexpectedTokenError,
             'expected ruby code or the start of a rux tag but found '\
               "#{type_of(current)} instead"
         end
+
+        break if curlies == 0
       end
 
       AST::ListNode.new(children)
@@ -306,7 +313,7 @@ module Rux
     def consume(*types)
       if !types.include?(type_of(current))
         raise UnexpectedTokenError,
-          "expected [#{types.map(&:to_s).join(', ')}], got '#{type_of(current)}'"
+          "expected [#{types.map(&:to_s).join(', ')}], got '#{type_of(current)}' at #{pos_of(current)}"
       end
 
       @current = get_next
